@@ -1,11 +1,19 @@
 # GradleBoot
 
+## Bootstrapper
+
 Run locally:
 ```
-./gradlew runDebugExecutable
+./gradlew :bootstrapper:runDebugExecutableLinuxX64
 ```
 
 Create native executable:
 ```
-./gradlew linkReleaseExecutableLinuxX64
+./gradlew :bootstrapper:linkReleaseExecutableLinuxX64
+```
+
+## Configurer
+
+```
+./gradlew :configurer:run
 ```
