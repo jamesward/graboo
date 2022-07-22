@@ -1,5 +1,6 @@
 plugins {
     kotlin("multiplatform")
+    kotlin("plugin.serialization")
 }
 
 repositories {
@@ -27,13 +28,20 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 implementation("com.squareup.okio:okio:3.2.0")
-                implementation("com.github.ajalt.clikt:clikt:3.5.0")
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
+                //implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4-native-mt")
+                implementation("io.ktor:ktor-client-core:2.0.3")
+                implementation("io.ktor:ktor-client-content-negotiation:2.0.3")
+                implementation("io.ktor:ktor-serialization-kotlinx-json:2.0.3")
             }
         }
 
         val nativeMain by creating {
             dependsOn(commonMain)
+            /*
+            dependencies {
+                implementation("io.ktor:ktor-client-core:2.0.3")
+            }
+             */
         }
 
         val linuxX64Main by getting {
