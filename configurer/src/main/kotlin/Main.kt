@@ -26,11 +26,10 @@ fun main() {
 
     Utils.copyTemplate(File("tmp"), "kotlin")
 
-    /*
-
+    """
     1. If no project
-        a. If cwd/*.java -> ask user if they want to standardize project, if yes -> move to src/main/java else their own their own
-        b. If cwd/*.kt -> ditto with src/main/kotlin
+        a. If cwd / *.java -> ask user if they want to standardize project, if yes -> move to src/main/java else their own their own
+        b. If cwd / *.kt -> ditto with src/main/kotlin
         c. Else -> ask the user what type of project they want and bootstrap accordingly
 
     2. Configure the project's build based on file structure, etc
@@ -48,7 +47,7 @@ fun main() {
     5. Menu for adding dependencies & plugins
         a. Searchable
         "would you like to enable x feature?"
-     */
+    """
 
     session {
         var counter by liveVarOf(0)
