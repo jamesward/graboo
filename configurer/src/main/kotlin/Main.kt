@@ -24,7 +24,25 @@ object Utils {
 
 fun main() {
 
-    Utils.copyTemplate(File("tmp"), "kotlin")
+    //Utils.copyTemplate(File("tmp"), "kotlin")
+
+    """
+        Compile Status: 0 Errors.  0 Warnings.  15 seconds ago.
+        Test Status: 5 Passed.  0 Failed.  15 seconds ago.
+        
+        What would you like to do?
+        > Add a library
+        > Configure Run Cycle
+        > Configure Test Cycle
+          > Turn off auto-test
+          > Filter tests
+        > Open in an IDE
+          > IntelliJ
+          > Android Studio
+          > VS Code
+        > Help
+    """
+
 
     """
     1. If no project

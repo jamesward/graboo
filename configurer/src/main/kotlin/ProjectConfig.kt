@@ -14,7 +14,7 @@ object ProjectConfig {
 
     @JvmInline
     value class BuildFile(val path: Path)
-    private fun ProjectDir.buildFile(): BuildFile = BuildFile(path / "build.gradle.kts")
+    fun ProjectDir.buildFile(): BuildFile = BuildFile(path / "build.gradle.kts")
 
     fun hasPlugin(projectDir: ProjectDir, plugin: String): Boolean = run {
         projectDir.buildFile().path.readLines().any {
@@ -24,7 +24,6 @@ object ProjectConfig {
     }
 
     fun createBuild(buildFile: BuildFile): Unit = run {
-        //buildFile.path.createFile()
         /*
             java {
                 toolchain {
@@ -61,6 +60,17 @@ object ProjectConfig {
         buildFile.path.writeLines(newLines)
     }
 
+
+    // todo
+    //   - text parsing replacement
+    //   - adding dependencies
+    //   - java toolchain
+    //   - main runner
+    //   - background compiler
+    //   - background build updater
+    //   - testing support
+    //   - java bootstrapper
+    //   - kotter tui
     fun run(dir: ProjectDir): Unit = run {
         if (!dir.buildFile().path.exists()) {
             createBuild(dir.buildFile())

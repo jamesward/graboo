@@ -45,7 +45,7 @@ class ProjectConfigSpec : StringSpec({
 
         ProjectConfig.hasPlugin(projectDir, "application") shouldBe true
 
-        val output = Gradler.runMain(projectDir)
+        val output = Gradler.runTaskAndCaptureOutput(projectDir, "run")
         output.contains("hello from Gradle Boot") shouldBe true
 
         // todo: cleanup correctly
