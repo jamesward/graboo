@@ -1,14 +1,26 @@
 import java.nio.file.Path
 import kotlin.io.path.appendText
-import kotlin.io.path.createFile
 import kotlin.io.path.div
 import kotlin.io.path.exists
 import kotlin.io.path.readLines
-import kotlin.io.path.readText
 import kotlin.io.path.writeLines
 import kotlin.io.path.writeText
 
 object ProjectConfig {
+
+    // note: using manual parsing because Properties is a Map<String, Any>
+    private val importmap: Map<String, String> = javaClass.getResourceAsStream("importmap.properties").bufferedReader().use { reader ->
+        reader.readLines().fold(emptyMap()) { existing, line ->
+            try {
+                val (k, v) = line.split('=')
+                existing + (k to v)
+            }
+            catch (_: Exception) {
+                existing
+            }
+        }
+    }
+
     @JvmInline
     value class ProjectDir(val path: Path)
 
@@ -101,6 +113,40 @@ object ProjectConfig {
                 }
                 
             """.trimIndent())
+        }
+
+        val kotlinImports = (dir.path / "src/main/kotlin").toFile().walkBottomUp().fold(emptySet<String>()) { imports, file ->
+            val theseImports = if (file.extension == "kt") {
+                file.readLines()
+                    .filter { it.startsWith("import ") }
+                    .map { it.removePrefix("import ") }
+                    .toSet()
+            }
+            else {
+                emptySet()
+            }
+
+            imports + theseImports
+        }
+
+        val neededDeps = kotlinImports.fold(emptySet<String>()) { knownNeededDeps, import ->
+            val deps = importmap.filterKeys {
+                import.startsWith(it.toString())
+            }
+            if (deps.isEmpty()) {
+                knownNeededDeps
+            }
+            else {
+                knownNeededDeps + deps.values.map { it.toString() }
+            }
+        }
+
+        neededDeps.forEach { dep ->
+            Gradler.Dependency.parse(dep)?.let { dependency ->
+                if (!Gradler.hasDependency(dir.buildFile(), dependency)) {
+                    Gradler.addDependency(dir.buildFile(), dependency)
+                }
+            }
         }
     }
 

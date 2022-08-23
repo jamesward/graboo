@@ -1,18 +1,9 @@
-import com.varabyte.kotter.foundation.input.Completions
-import com.varabyte.kotter.foundation.input.input
-import com.varabyte.kotter.foundation.input.onInputEntered
-import com.varabyte.kotter.foundation.input.runUntilInputEntered
 import com.varabyte.kotter.foundation.liveVarOf
 import com.varabyte.kotter.foundation.session
-import com.varabyte.kotter.foundation.text.cyan
-import com.varabyte.kotter.foundation.text.p
 import com.varabyte.kotter.foundation.text.text
-import com.varabyte.kotter.foundation.text.textLine
-import com.varabyte.kotter.foundation.text.yellow
 import kotlinx.coroutines.delay
 import java.io.File
 import java.nio.file.Files
-import java.nio.file.Path
 
 object Utils {
     fun copyTemplate(dir: File, template: String) {

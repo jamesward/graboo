@@ -1,9 +1,5 @@
-import ProjectConfig.buildFile
 import org.gradle.tooling.GradleConnector
-import org.gradle.tooling.model.GradleProject
-import java.io.BufferedOutputStream
 import java.io.ByteArrayOutputStream
-import java.nio.file.Path
 import kotlin.io.path.readLines
 import kotlin.io.path.writeLines
 
@@ -33,7 +29,17 @@ object Gradler {
         }
     }
 
-    data class Dependency(val groupId: String, val artifactId: String, val version: String? = null)
+    data class Dependency(val groupId: String, val artifactId: String, val version: String? = null) {
+        companion object {
+            fun parse(dep: String): Dependency? =
+                try {
+                    val (groupId, artifactId) = dep.split(':')
+                    Dependency(groupId, artifactId)
+                } catch (_: Exception) {
+                    null
+                }
+        }
+    }
 
     fun addDependency(buildFile: ProjectConfig.BuildFile, dependency: Dependency): Unit = run {
         val lines = buildFile.path.readLines()
@@ -64,4 +70,6 @@ object Gradler {
             it.contains("\"${dependency.groupId}:${dependency.artifactId}")
         }
 
+
+    // import kotlinx.coroutines
 }
