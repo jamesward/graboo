@@ -1,7 +1,3 @@
-import org.gradle.api.tasks.testing.logging.TestExceptionFormat
-import org.gradle.api.tasks.testing.logging.TestLogEvent
-import org.jetbrains.kotlin.config.LanguageVersion
-
 plugins {
     application
     kotlin("jvm")
@@ -23,9 +19,20 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
     implementation("org.gradle:gradle-tooling-api:7.5.1")
 
-    testImplementation("io.kotest:kotest-runner-junit5:5.4.1")
-    testImplementation("io.kotest:kotest-assertions-core:5.4.1")
-    testImplementation("org.slf4j:slf4j-simple:1.7.36")
+    runtimeOnly("org.slf4j:slf4j-simple:1.7.36")
+
+    testImplementation("io.kotest:kotest-runner-junit5:5.4.2")
+    testImplementation("io.kotest:kotest-assertions-core:5.4.2")
+
+    // https://github.com/gradle/gradle/issues/778
+    // https://github.com/fusesource/jansi/issues/66
+    runtimeOnly("org.fusesource.jansi:jansi") {
+        version {
+            strictly("1.18")
+        }
+    }
+
+    //testImplementation("org.slf4j:slf4j-simple:1.7.36")
 }
 
 application {
@@ -37,7 +44,7 @@ tasks.withType<Test> {
 
     testLogging {
         showStandardStreams = true
-        exceptionFormat = TestExceptionFormat.FULL
-        events(TestLogEvent.STARTED, TestLogEvent.PASSED, TestLogEvent.SKIPPED, TestLogEvent.FAILED)
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+        events(org.gradle.api.tasks.testing.logging.TestLogEvent.STARTED, org.gradle.api.tasks.testing.logging.TestLogEvent.PASSED, org.gradle.api.tasks.testing.logging.TestLogEvent.SKIPPED, org.gradle.api.tasks.testing.logging.TestLogEvent.FAILED)
     }
 }

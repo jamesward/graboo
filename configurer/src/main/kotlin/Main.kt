@@ -1,10 +1,22 @@
+import com.varabyte.kotter.foundation.input.Completions
+import com.varabyte.kotter.foundation.input.Keys
+import com.varabyte.kotter.foundation.input.input
+import com.varabyte.kotter.foundation.input.onInputEntered
+import com.varabyte.kotter.foundation.input.onKeyPressed
 import com.varabyte.kotter.foundation.liveVarOf
+import com.varabyte.kotter.foundation.runUntilSignal
 import com.varabyte.kotter.foundation.session
+import com.varabyte.kotter.foundation.text.bold
 import com.varabyte.kotter.foundation.text.text
-import kotlinx.coroutines.delay
-import java.io.File
-import java.nio.file.Files
+import com.varabyte.kotter.foundation.text.textLine
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
+import java.nio.file.Paths
+import kotlin.io.path.createDirectories
+import kotlin.io.path.div
+import kotlin.io.path.writeText
 
+/*
 object Utils {
     fun copyTemplate(dir: File, template: String) {
         javaClass.getResourceAsStream("templates/$template/build.gradle.kts")?.use { b ->
@@ -12,61 +24,167 @@ object Utils {
         }
     }
 }
+ */
+
+data class BuildActions(
+    val compileEnabled: Boolean,
+    val compileOut: Flow<String>,
+    val compileErr: Flow<String>,
+    val testEnabled: Boolean,
+    val testOut: Flow<String>,
+    val testErr: Flow<String>,
+    val testFilter: String?,
+    val runEnabled: Boolean,
+    val runOut: Flow<String>,
+    val runErr: Flow<String>,
+    val runIn: Flow<String>,
+    val runClass: String?,
+)
 
 fun main() {
 
-    //Utils.copyTemplate(File("tmp"), "kotlin")
-
-    """
-        Compile Status: 0 Errors.  0 Warnings.  15 seconds ago.
-        Test Status: 5 Passed.  0 Failed.  15 seconds ago.
-        
-        What would you like to do?
-        > Add a library
-        > Configure Run Cycle
-        > Configure Test Cycle
-          > Turn off auto-test
-          > Filter tests
-        > Open in an IDE
-          > IntelliJ
-          > Android Studio
-          > VS Code
-        > Help
-    """
-
-
-    """
-    1. If no project
-        a. If cwd / *.java -> ask user if they want to standardize project, if yes -> move to src/main/java else their own their own
-        b. If cwd / *.kt -> ditto with src/main/kotlin
-        c. Else -> ask the user what type of project they want and bootstrap accordingly
-
-    2. Configure the project's build based on file structure, etc
-        a. if cwd/src/main/java -> bootstrap a Java project
-        b. if cwd/src/main/kotlin -> bootstrap a Kotlin project
-
-        - If src contains a runnable app (main) then add application
-
-    3. Run gradle
-       a. If build fails with errors related to missing deps, then prompt for dependency
-       b. Auto-restart build when it changes
-
-    4. Enable launching IntelliJ from graboo
-
-    5. Menu for adding dependencies & plugins
-        a. Searchable
-        "would you like to enable x feature?"
-    """
+    // todo: graboo & gradle updates
+    val cwd = ProjectConfig.ProjectDir(Paths.get(""))
+    ProjectConfig.setupGradle(cwd)
 
     session {
-        var counter by liveVarOf(0)
-        section {
-            text("count = $counter")
-        }.run {
-            repeat(10) {
-                delay(1000)
-                counter++
+
+        var buildActions by liveVarOf(
+            BuildActions(
+                false,
+                emptyFlow(),
+                emptyFlow(),
+                false,
+                emptyFlow(),
+                emptyFlow(),
+                null,
+                false,
+                emptyFlow(),
+                emptyFlow(),
+                emptyFlow(),
+                null
+            )
+        )
+
+        fun loop() {
+            val sourceConfig = ProjectConfig.sourceConfig(cwd)
+            buildActions = if (sourceConfig.languages.isEmpty()) {
+                buildActions.copy(compileEnabled = false, testEnabled = false, runEnabled = false)
+            } else {
+                ProjectConfig.setupSourceSets(cwd, sourceConfig)
+                buildActions.copy(compileEnabled = true, testEnabled = sourceConfig.hasTest, runEnabled = sourceConfig.mains.isNotEmpty())
             }
         }
+
+        loop()
+
+        var menuIndex: Int by liveVarOf(0)
+        var menuAction: Boolean by liveVarOf(false)
+        var message: String? by liveVarOf(null)
+
+        section {
+            if (!buildActions.compileEnabled) {
+                text("No known sources found")
+            } else {
+                text("Compiling")
+            }
+
+            // main menu
+            textLine()
+            textLine()
+            bold { textLine("What would you like to do?") }
+            if (menuIndex == 0) {
+                text("> "); textLine("Add a programming language")
+
+                if (menuAction) {
+                    text("    Java or Kotlin? "); input(Completions("java", "kotlin"))
+                    textLine()
+                }
+            } else {
+                textLine("Add a programming language")
+            }
+
+            if (menuIndex == 1) {
+                text("> "); textLine("Open in an IDE")
+            } else {
+                textLine("Open in an IDE")
+            }
+
+            if (menuIndex == 2) {
+                text("> "); textLine("Help")
+            } else {
+                textLine("Help")
+            }
+
+            message?.let {
+                textLine(it)
+            }
+
+        }.runUntilSignal {
+
+            onKeyPressed {
+                when (key) {
+                    Keys.UP -> if (menuIndex > 0) menuIndex--
+                    Keys.DOWN -> if (menuIndex < 2) menuIndex++
+                    Keys.ENTER -> if (!menuAction) menuAction = true
+                }
+            }
+
+            onInputEntered {
+                // we should only ever create directories & files here
+                // the gradle configuration generator should happen on the loop
+                // (ie when a file is created or when graboo creates a file)
+                if (menuIndex == 0) {
+                    menuAction = false
+
+                    if (input.lowercase().startsWith("k")) {
+                        (cwd.path / "src/main/kotlin").createDirectories()
+                        (cwd.path / "src/test/kotlin").createDirectories()
+
+                        // todo: add App.kt & AppTest.kt
+                    }
+                    else {
+                        val mainDir = (cwd.path / "src/main/java")
+                        mainDir.createDirectories()
+
+                        (mainDir / "App.java").writeText("""
+                            public class App {
+                                public static void main(String... args) {
+                                    System.out.println("hello, world");
+                                }
+                            }
+                        """.trimIndent())
+
+                        val testDir = (cwd.path / "src/test/java")
+                        testDir.createDirectories()
+
+                        (testDir / "AppTest.java").writeText("""
+                            import static org.junit.jupiter.api.Assertions.assertTrue;
+
+                            import org.junit.jupiter.api.Test;
+
+                            class AppTest {
+                                @Test
+                                void trueTest() {
+                                    assertTrue(true);
+                                }
+                            }
+                        """.trimIndent())
+                    }
+
+                    loop()
+                }
+            }
+
+        }
+
+
     }
+
+    // file watch
+
+    // run
+
+    // loop on change
+
 }

@@ -15,7 +15,7 @@ class GradlerSpec : StringSpec({
         ProjectConfig.injectPlugin(projectDir.buildFile(), """kotlin("jvm") version "1.7.10"""")
 
         val dependency = Gradler.Dependency("org.jetbrains.kotlinx", "kotlinx-coroutines-core", "1.6.4")
-        Gradler.addDependency(projectDir.buildFile(), dependency)
+        Gradler.addDependency(projectDir.buildFile(), dependency, ProjectConfig.SourceType.MAIN)
 
         Gradler.hasDependency(projectDir.buildFile(), dependency) shouldBe true
 
@@ -38,14 +38,21 @@ class GradlerSpec : StringSpec({
             import kotlinx.coroutines.await
         """.trimIndent())
 
+        /*
         ProjectConfig.run(projectDir)
 
         val coroutinesDependency = Gradler.Dependency("org.jetbrains.kotlinx", "kotlinx-coroutines-core")
 
         Gradler.hasDependency(projectDir.buildFile(), coroutinesDependency) shouldBe true
+         */
 
         // todo: cleanup correctly
         dir.toFile().deleteRecursively()
+    }
+
+    "parse dependency" {
+        Gradler.Dependency.parse("foo:bar") shouldBe Gradler.Dependency("foo", "bar")
+        Gradler.Dependency.parse("foo:bar:1.2.3") shouldBe Gradler.Dependency("foo", "bar", "1.2.3")
     }
 
 })
