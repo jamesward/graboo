@@ -28,6 +28,11 @@ jobs:
         run: |
           sudo apt-get install libcurl4-openssl-dev
 
+      - name: Install Dependencies
+        if: matrix.os == 'macos'
+        run: |
+          brew install curl
+
       - uses: actions/setup-java@v3
         with:
           distribution: temurin
