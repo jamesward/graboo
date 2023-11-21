@@ -1,3 +1,5 @@
+import ProjectConfig.buildFile
+import com.varabyte.kotter.foundation.collections.liveListOf
 import com.varabyte.kotter.foundation.input.Completions
 import com.varabyte.kotter.foundation.input.Keys
 import com.varabyte.kotter.foundation.input.input
@@ -9,12 +11,24 @@ import com.varabyte.kotter.foundation.session
 import com.varabyte.kotter.foundation.text.bold
 import com.varabyte.kotter.foundation.text.text
 import com.varabyte.kotter.foundation.text.textLine
+import com.varabyte.kotter.foundation.timer.addTimer
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flow
+import java.nio.file.FileSystems
+import java.nio.file.Path
 import java.nio.file.Paths
+import java.nio.file.StandardWatchEventKinds.ENTRY_CREATE
+import java.nio.file.StandardWatchEventKinds.ENTRY_DELETE
+import java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY
+import java.nio.file.WatchEvent
+import java.nio.file.WatchService
+import java.time.Duration
 import kotlin.io.path.createDirectories
 import kotlin.io.path.div
+import kotlin.io.path.exists
 import kotlin.io.path.writeText
+
 
 /*
 object Utils {
@@ -25,6 +39,7 @@ object Utils {
     }
 }
  */
+
 
 data class BuildActions(
     val compileEnabled: Boolean,
@@ -46,6 +61,10 @@ fun main() {
     // todo: graboo & gradle updates
     val cwd = ProjectConfig.ProjectDir(Paths.get(""))
     ProjectConfig.setupGradle(cwd)
+    val src = (cwd.path / "src")
+    if ( !src.exists()) {
+        src.createDirectories()
+    }
 
     session {
 
@@ -66,6 +85,9 @@ fun main() {
             )
         )
 
+        val watcher = FileSystems.getDefault().newWatchService()
+        val cwdWatchKey = cwd.path.register(watcher, ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY)
+
         fun loop() {
             val sourceConfig = ProjectConfig.sourceConfig(cwd)
             buildActions = if (sourceConfig.languages.isEmpty()) {
@@ -81,8 +103,24 @@ fun main() {
         var menuIndex: Int by liveVarOf(0)
         var menuAction: Boolean by liveVarOf(false)
         var message: String? by liveVarOf(null)
+        val watchEvents = liveListOf<WatchEvent<*>>()
+
+        val f = emptyFlow<String>()
 
         section {
+            if (watchEvents.isNotEmpty()) {
+                watchEvents.map { watchEvent ->
+                    val path = (watchEvent.context() as Path)
+                    val s = when(watchEvent.kind()) {
+                        ENTRY_CREATE -> "Create $path"
+                        ENTRY_MODIFY -> "Modify $path"
+                        ENTRY_DELETE -> "Delete $path"
+                        else -> "Unknown"
+                    }
+                    textLine(s)
+                }
+            }
+
             if (!buildActions.compileEnabled) {
                 text("No known sources found")
             } else {
@@ -121,6 +159,24 @@ fun main() {
             }
 
         }.runUntilSignal {
+
+            addTimer(Duration.ofMillis(500), true) {
+                /*
+                watcher
+                f.collect { s ->
+                    println(s)
+                }
+                 */
+                /*
+                val events = cwdWatchKey.pollEvents()
+                if (events.isNotEmpty()) {
+                    watchEvents.withWriteLock {
+                        watchEvents.clear()
+                        watchEvents.addAll(events)
+                    }
+                }
+                 */
+            }
 
             onKeyPressed {
                 when (key) {

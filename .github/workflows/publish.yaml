@@ -1,0 +1,89 @@
+on:
+  push:
+    tags:
+      - "v*"
+
+concurrency: ci-${{ github.ref }}
+
+jobs:
+  test:
+    uses: ./.github/workflows/test.yaml
+
+  build:
+    name: publish
+    needs: [test]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
+
+      - id: secret-check
+        name: Check for Secret Availability
+        run: |
+          if [ "${{ secrets.GRADLE_PUBLISH_KEY }}" != '' ] && [ "${{ secrets.GRADLE_PUBLISH_SECRET }}" != '' ]; then
+            echo "available=true" >> $GITHUB_OUTPUT;
+          else
+            echo "available=false" >> $GITHUB_OUTPUT;
+          fi
+
+      - name: Publish
+        if: ${{ steps.secret-check.outputs.available == 'true' }}
+        run: |
+          ./gradlew :gradle-plugin:publishPlugins -Pgradle.publish.key=${{ secrets.GRADLE_PUBLISH_KEY }} -Pgradle.publish.secret=${{ secrets.GRADLE_PUBLISH_SECRET }}
+
+      - id: get-version
+        name: Get Version
+        if: ${{ steps.secret-check.outputs.available == 'true' }}
+        run: |
+          echo "version=$(./gradlew :version -q)" >> $GITHUB_OUTPUT
+
+      - name: graboo executables
+        if: ${{ steps.secret-check.outputs.available == 'true' }}
+        run: |
+          ./gradlew :bootstrapper:linkReleaseExecutableLinuxX64
+
+      - name: run upx
+        if: ${{ steps.secret-check.outputs.available == 'true' }}
+        uses: svenstaro/upx-action@v2
+        with:
+          file: bootstrapper/build/bin/linuxX64/releaseExecutable/bootstrapper.kexe
+          args: --best --lzma
+
+      - name: upload executables
+        if: ${{ steps.secret-check.outputs.available == 'true' }}
+        uses: actions/upload-artifact@v2
+        with:
+          name: graboo
+          path: bootstrapper/build/bin/linuxX64/releaseExecutable/bootstrapper.kexe
+
+      - name: release binaries
+        if: ${{ steps.secret-check.outputs.available == 'true' }}
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: bootstrapper/build/bin/linuxX64/releaseExecutable/bootstrapper.kexe
+          asset_name: graboo
+          overwrite: true
+          tag: ${{ github.ref }}
+
+      # todo: update graboo in examples/*/*/ ?
+
+      - name: Update Versions
+        if: ${{ steps.secret-check.outputs.available == 'true' }}
+        run: |
+          sed -ie "s/version \"[^\"]*\"/version \"${{ steps.get-version.outputs.version }}\"/" examples/*/*/settings.gradle.kts
+
+      - name: Commit Version Updates
+        if: ${{ steps.secret-check.outputs.available == 'true' }}
+        uses: test-room-7/action-update-file@v1
+        with:
+          file-path: |
+            examples/*/*/settings.gradle.kts
+          commit-msg: Update version
+          github-token: ${{ secrets.GITHUB_TOKEN }}

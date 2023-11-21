@@ -1,5 +1,9 @@
-GradleBoot Values & Design
+Graboo Values & Design
 -----------------
+
+- Define the model in terms of what the software developer wants, not what the build system needs
+- Cover the 80% use cases
+
 
 - Make mostly accurate assumptions about what the user is trying to do
   - Inspects a directory then assembles and runs a Gradle Build

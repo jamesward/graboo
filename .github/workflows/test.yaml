@@ -1,0 +1,44 @@
+on:
+  workflow_call:
+  push:
+    branches:
+      - '**'
+    tags-ignore:
+      - '**' # tags are tested by publish action
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [ ubuntu, macos ]
+        include:
+          - os: ubuntu
+            runs: ubuntu-latest
+          - os: macos
+            runs: macos-latest
+
+    runs-on: ${{ matrix.runs }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Dependencies
+        if: matrix.os == 'ubuntu'
+        run: |
+          sudo apt-get install libcurl4-openssl-dev
+
+      - uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
+
+      - uses: SimonMarquis/android-accept-licenses@v1
+
+      - name: Test
+        run: |
+          ./gradlew test
+          ./gradlew allTests

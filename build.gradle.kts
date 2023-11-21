@@ -1,9 +1,4 @@
 plugins {
-    kotlin("jvm") version "1.7.20" apply false
-    kotlin("multiplatform") version "1.7.20" apply false
-    kotlin("plugin.serialization") version "1.7.20" apply false
-}
-
-repositories {
-    mavenCentral()
+    alias(universe.plugins.kotlin.multiplatform) apply false
+    alias(universe.plugins.kotlin.plugin.serialization) apply false
 }

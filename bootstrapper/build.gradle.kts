@@ -1,10 +1,9 @@
-plugins {
-    kotlin("multiplatform")
-    kotlin("plugin.serialization")
-}
+import java.util.Base64
 
-repositories {
-    mavenCentral()
+plugins {
+    alias(universe.plugins.kotlin.multiplatform)
+    alias(universe.plugins.kotlin.plugin.serialization)
+    alias(universe.plugins.kotlin.power.assert)
 }
 
 kotlin {
@@ -12,10 +11,19 @@ kotlin {
         binaries {
             executable(listOf(DEBUG, RELEASE)) {
                 entryPoint = "main"
+
+                // from: https://stackoverflow.com/a/76032383/77409
+                runTask?.run {
+                    val args = providers.gradleProperty("runArgs").orNull?.split(' ') ?: emptyList()
+                    argumentProviders.add(
+                        CommandLineArgumentProvider { args }
+                    )
+                }
             }
         }
     }
 
+    /*
     mingwX64 {
         binaries {
             executable(listOf(DEBUG, RELEASE)) {
@@ -23,32 +31,100 @@ kotlin {
             }
         }
     }
+     */
 
     sourceSets {
-        val commonMain by getting {
+        commonMain {
             dependencies {
-                implementation("com.squareup.okio:okio:3.2.0")
-                //implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4-native-mt")
-                implementation("io.ktor:ktor-client-core:2.0.3")
-                implementation("io.ktor:ktor-client-content-negotiation:2.0.3")
-                implementation("io.ktor:ktor-serialization-kotlinx-json:2.0.3")
+                implementation(universe.okio)
+                implementation(universe.ktor.client.core)
+                implementation(universe.ktor.client.content.negotiation)
+                implementation(universe.ktor.serialization.kotlinx.json)
+                // todo: to universe
+                implementation("com.benasher44:uuid:0.8.2")
             }
         }
 
-        val nativeMain by creating {
-            dependsOn(commonMain)
-            /*
+        linuxMain {
             dependencies {
-                implementation("io.ktor:ktor-client-core:2.0.3")
-            }
-             */
-        }
-
-        val linuxX64Main by getting {
-            dependsOn(nativeMain)
-            dependencies {
-                implementation("io.ktor:ktor-client-curl:2.0.3")
+                implementation(universe.ktor.client.curl)
             }
         }
     }
 }
+
+tasks.withType<AbstractTestTask> {
+    testLogging {
+        showStandardStreams = true
+        showExceptions = true
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+        events(
+            org.gradle.api.tasks.testing.logging.TestLogEvent.STARTED,
+            org.gradle.api.tasks.testing.logging.TestLogEvent.PASSED,
+            org.gradle.api.tasks.testing.logging.TestLogEvent.SKIPPED,
+            org.gradle.api.tasks.testing.logging.TestLogEvent.FAILED,
+        )
+    }
+}
+
+tasks.register("addBootWrapper") {
+    dependsOn(":bootwrapper:uberJar")
+
+    // todo: make this run when uberJar is not up-to-date
+    onlyIf {
+        true
+    }
+
+    outputs.file("src/nativeMain/kotlin/BootWrapper.kt")
+
+    doLast {
+        val uberJar = project(":bootwrapper").file("build/libs/bootwrapper-uber.jar")
+        val encoder = Base64.getEncoder()
+        val s = encoder.encodeToString(uberJar.readBytes()) //.chunked(10240).map { """"$it"""" }.joinToString("+ \n")
+        val uberJarString = "\"" + s + "\""
+        //val uberJarString = uberJar.readBytes().joinToString(", ", "byteArrayOf(", ")")
+
+        val contents = """
+            object BootWrapper {
+                val encodedJar = $uberJarString
+            }
+        """.trimIndent()
+
+        outputs.files.singleFile.writeText(contents)
+    }
+}
+
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinNativeCompile>().configureEach {
+    dependsOn("addBootWrapper")
+}
+
+/*
+tasks.register("addConfigurer") {
+    dependsOn(":configurer:uberJar")
+    //dependsOn(":helloer:uberJar")
+
+    doLast {
+        val uberJar = project(":configurer").file("build/libs/configurer-uber.jar")
+        //val uberJar = project(":helloer").file("build/libs/helloer-uber.jar")
+        val encoder = Base64.getEncoder()
+        val s = encoder.encodeToString(uberJar.readBytes()) //.chunked(10240).map { """"$it"""" }.joinToString("+ \n")
+        val uberJarString = "\"" + s + "\""
+        //val uberJarString = uberJar.readBytes().joinToString(", ", "byteArrayOf(", ")")
+
+        val contents = """
+            object Configurer {
+                val encodedJar = $uberJarString
+            }
+        """.trimIndent()
+
+        val srcFile = project.file("src/nativeMain/kotlin/Configurer.kt")
+        srcFile.writeText(contents)
+    }
+}
+
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinNativeCompile>().configureEach {
+    dependsOn("addConfigurer")
+}
+
+
+ */

@@ -1,6 +1,7 @@
 plugins {
     application
     kotlin("jvm")
+    //id("com.github.johnrengelman.shadow") version "7.1.2"
 }
 
 java {
@@ -39,6 +40,10 @@ application {
     mainClass.set("MainKt")
 }
 
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+    kotlinOptions.languageVersion = "1.8"
+}
+
 tasks.withType<Test> {
     useJUnitPlatform()
 
@@ -47,4 +52,23 @@ tasks.withType<Test> {
         exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
         events(org.gradle.api.tasks.testing.logging.TestLogEvent.STARTED, org.gradle.api.tasks.testing.logging.TestLogEvent.PASSED, org.gradle.api.tasks.testing.logging.TestLogEvent.SKIPPED, org.gradle.api.tasks.testing.logging.TestLogEvent.FAILED)
     }
+}
+
+/*
+tasks.named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJar").configure {
+    minimize()
+}
+ */
+
+tasks.register<Jar>("uberJar") {
+    archiveClassifier.set("uber")
+    manifest.attributes["Main-Class"] = "MainKt"
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+    from(sourceSets.main.get().output)
+
+    dependsOn(configurations.runtimeClasspath)
+    from({
+        configurations.runtimeClasspath.get().filter { it.name.endsWith("jar") }.map { zipTree(it) }
+    })
 }
