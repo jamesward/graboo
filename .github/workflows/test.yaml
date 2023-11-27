@@ -10,12 +10,14 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [ ubuntu, macos ]
+        os: [ ubuntu, macos, windows ]
         include:
           - os: ubuntu
             runs: ubuntu-latest
           - os: macos
             runs: macos-latest
+          - os: windows
+            runs: windows-latest
 
     runs-on: ${{ matrix.runs }}
 
@@ -27,11 +29,6 @@ jobs:
         if: matrix.os == 'ubuntu'
         run: |
           sudo apt-get install libcurl4-openssl-dev
-
-      - name: Install Dependencies
-        if: matrix.os == 'macos'
-        run: |
-          brew install curl
 
       - uses: actions/setup-java@v3
         with:

@@ -23,15 +23,24 @@ kotlin {
         }
     }
 
-    /*
-    mingwX64 {
+    // by default this target is enabled on Linux but doesn't really work with ktor
+    if (System.getProperty("os.name").startsWith("Win", ignoreCase = true)) {
+        mingwX64 {
+            binaries {
+                executable(listOf(DEBUG, RELEASE)) {
+                    entryPoint = "main"
+                }
+            }
+        }
+    }
+
+    macosArm64 {
         binaries {
             executable(listOf(DEBUG, RELEASE)) {
                 entryPoint = "main"
             }
         }
     }
-     */
 
     sourceSets {
         commonMain {
@@ -40,14 +49,29 @@ kotlin {
                 implementation(universe.ktor.client.core)
                 implementation(universe.ktor.client.content.negotiation)
                 implementation(universe.ktor.serialization.kotlinx.json)
+                implementation(universe.benasher44.uuid)
                 // todo: to universe
-                implementation("com.benasher44:uuid:0.8.2")
+                implementation("com.kgit2:kommand:1.1.0")
             }
         }
 
         linuxMain {
             dependencies {
                 implementation(universe.ktor.client.curl)
+            }
+        }
+
+        mingwMain {
+            dependencies {
+                // todo: to universe
+                implementation("io.ktor:ktor-client-winhttp:2.3.6")
+            }
+        }
+
+        macosMain {
+            dependencies {
+                // todo: to universe
+                implementation("io.ktor:ktor-client-darwin:2.3.6")
             }
         }
     }

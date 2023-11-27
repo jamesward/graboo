@@ -1,4 +1,5 @@
 import com.benasher44.uuid.uuid4
+import com.kgit2.process.Command
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.plugins.*
@@ -22,8 +23,6 @@ import okio.Path
 import okio.Path.Companion.toPath
 import platform.posix.exit
 import platform.posix.fgets
-import platform.posix.popen
-import platform.posix.pclose
 
 @kotlinx.serialization.Serializable
 data class AvailableReleases(val most_recent_lts: Int)
@@ -52,14 +51,17 @@ suspend fun saveToTempExtractAndDelete(filename: String, to: Path, bytes: ByteAr
         }
 
         FileSystem.SYSTEM.createDirectory(to, false)
+        val argsString = "-x -f $archive -C $to --strip-components=1"
+        val args = argsString.split("\\s+".toRegex()).toTypedArray()
 
-        val cmd = "/usr/bin/tar -x -f $archive -C $to --strip-components=1"
-        val fp = popen(cmd, "r")
-        val statusCode = pclose(fp)
+        val exitStatus = Command("tar")
+            .args(*args)
+            .spawn()
+            .wait()
 
-        if (statusCode != 0) {
+        if (exitStatus.code != 0) {
             coroutineScope {
-                cancel("Could not run: $cmd")
+                cancel("Could not run: tar $argsString")
             }
         }
     }
@@ -135,23 +137,17 @@ suspend fun runGradleWrapper(grabooDir: Path, jdk: Path, args: Array<String>) = 
     val javaExec = jdk / "bin" / "java"
     val argsString = args.joinToString(" ")
     val cmd = "$javaExec -Dgraboo.dir=$grabooDir -jar $bootwrapperJar $argsString"
-    val fp = popen(cmd, "r")
 
-    val stdout = buildString {
-        val buffer = ByteArray(1024)
-        while (true) {
-            val input = fgets(buffer.refTo(0), buffer.size, fp) ?: break
-            append(input.toKString())
+    val exitStatus = Command(javaExec.toString())
+        .args(*args)
+        .spawn()
+        .wait()
+
+    if (exitStatus.code != 0) {
+        coroutineScope {
+            println("`$cmd` failed with ${exitStatus.code}")
+            exit(exitStatus.code)
         }
-    }
-
-    val status = pclose(fp)
-    if (status != 0) {
-        println("`$cmd` failed with $status - $stdout")
-        exit(status)
-    }
-    else {
-        println(stdout)
     }
 }
 
