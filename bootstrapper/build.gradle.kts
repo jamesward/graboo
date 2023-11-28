@@ -7,24 +7,26 @@ plugins {
 }
 
 kotlin {
-    linuxX64 {
-        binaries {
-            executable(listOf(DEBUG, RELEASE)) {
-                entryPoint = "main"
+    if (org.gradle.internal.os.OperatingSystem.current().isLinux) {
+        linuxX64 {
+            binaries {
+                executable(listOf(DEBUG, RELEASE)) {
+                    entryPoint = "main"
 
-                // from: https://stackoverflow.com/a/76032383/77409
-                runTask?.run {
-                    val args = providers.gradleProperty("runArgs").orNull?.split(' ') ?: emptyList()
-                    argumentProviders.add(
-                        CommandLineArgumentProvider { args }
-                    )
+                    // from: https://stackoverflow.com/a/76032383/77409
+                    runTask?.run {
+                        val args = providers.gradleProperty("runArgs").orNull?.split(' ') ?: emptyList()
+                        argumentProviders.add(
+                            CommandLineArgumentProvider { args }
+                        )
+                    }
                 }
             }
         }
     }
 
     // by default this target is enabled on Linux but doesn't really work with ktor
-    if (System.getProperty("os.name").startsWith("Win", ignoreCase = true)) {
+    if (org.gradle.internal.os.OperatingSystem.current().isWindows) {
         mingwX64 {
             binaries {
                 executable(listOf(DEBUG, RELEASE)) {
