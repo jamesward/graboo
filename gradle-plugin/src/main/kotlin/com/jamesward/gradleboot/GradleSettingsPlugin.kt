@@ -3,9 +3,11 @@ package com.jamesward.gradleboot
 import com.android.build.api.dsl.ApplicationExtension
 import com.android.build.gradle.AppPlugin
 import com.android.build.gradle.internal.dependency.AndroidXDependencyCheck
+import com.jamesward.kotlinuniversecatalog.GradlePlugin
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.MinimalExternalModuleDependency
+import org.gradle.api.artifacts.VersionCatalogsExtension
 import org.gradle.api.initialization.Settings
 import org.gradle.api.plugins.ApplicationPlugin
 import org.gradle.api.plugins.JavaApplication
@@ -18,6 +20,7 @@ import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.gradle.jvm.toolchain.JavaLanguageVersion
 import org.gradle.kotlin.dsl.apply
 import org.gradle.kotlin.dsl.dependencies
+import org.gradle.kotlin.dsl.getByType
 import org.gradle.kotlin.dsl.maybeCreate
 import org.gradle.kotlin.dsl.the
 import org.gradle.kotlin.dsl.withType
@@ -25,6 +28,7 @@ import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.dsl.KotlinTopLevelExtension
 import org.jetbrains.kotlin.gradle.plugin.KotlinAndroidPluginWrapper
+import java.util.*
 
 @Suppress("UnstableApiUsage")
 class GradleSettingsPlugin : Plugin<Settings> {
@@ -233,6 +237,9 @@ class GradleSettingsPlugin : Plugin<Settings> {
             val kotlinApp = KotlinApp()
             kotlinApp.configure()
 
+            //val universe = project.extensions.getByType<VersionCatalogsExtension>().named("universe")
+            //universe.libraryAliases.forEach { println(it) }
+
             // todo: to class
             project.plugins.apply("org.jetbrains.kotlin.multiplatform")
             project.plugins.apply("com.bnorm.power.kotlin-power-assert")
@@ -362,6 +369,8 @@ class GradleSettingsPlugin : Plugin<Settings> {
             val javaApp = JavaApp()
             javaApp.configure()
 
+            val universe = project.extensions.getByType<VersionCatalogsExtension>().named("universe")
+
             //project.plugins.apply("java")
 
             // applies the java plugin
@@ -388,8 +397,8 @@ class GradleSettingsPlugin : Plugin<Settings> {
 
             project.dependencies {
                 // todo: universe version catalog
-                add("testImplementation", platform("org.junit:junit-bom:5.10.1"))
-                add("testImplementation", "org.junit.jupiter:junit-jupiter")
+                add("testImplementation", platform(universe.findLibrary("junit-bom").get()))
+                add("testImplementation", universe.findLibrary("junit-jupiter").get())
 
                 javaApp.dependencies?.implementations?.forEach {
                     add("implementation", it)
@@ -411,6 +420,8 @@ class GradleSettingsPlugin : Plugin<Settings> {
         fun androidApp(configure: AndroidApp.() -> Unit) {
             val androidApp = AndroidApp()
             androidApp.configure()
+
+            val universe = project.extensions.getByType<VersionCatalogsExtension>().named("universe")
 
             // todo: maybe no way to set jvmargs early enough
             //project.extraProperties.set("org.gradle.jvmargs", "-Xmx2048m -Dfile.encoding=UTF-8")
@@ -434,7 +445,7 @@ class GradleSettingsPlugin : Plugin<Settings> {
             }
 
             androidApplicationExtension.composeOptions {
-                kotlinCompilerExtensionVersion = "1.5.4"
+                kotlinCompilerExtensionVersion = universe.findLibrary("androidx-compose-compiler").get().get().version
             }
 
             androidApplicationExtension.defaultConfig {
@@ -470,15 +481,15 @@ class GradleSettingsPlugin : Plugin<Settings> {
 
             project.dependencies {
                 // todo: universe version catalog
-                add("implementation", "androidx.core:core-ktx:1.12.0")
-                add("implementation", "androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
-                add("implementation", "androidx.activity:activity-compose:1.8.0")
-                add("implementation", "androidx.compose.ui:ui:1.5.4")
-                add("implementation", "androidx.compose.ui:ui-tooling-preview:1.5.4")
-                add("implementation", "androidx.compose.material3:material3:1.1.2")
-                add("debugImplementation", "androidx.compose.ui:ui-tooling:1.5.4")
-                add("debugImplementation", "androidx.compose.ui:ui-test-manifest:1.5.4")
-                add("androidTestImplementation", "androidx.compose.ui:ui-test-junit4:1.5.4")
+                add("implementation", universe.findLibrary("androidx-core-ktx").get())
+                add("implementation", universe.findLibrary("androidx-lifecycle-runtime-kts").get())
+                add("implementation", universe.findLibrary("androidx-activity-compose").get())
+                add("implementation", universe.findLibrary("androidx-compose-ui").get())
+                add("implementation", universe.findLibrary("androidx-compose-ui-tooling-preview").get())
+                add("implementation", universe.findLibrary("androidx-compose-material3").get())
+                add("debugImplementation", universe.findLibrary("androidx-compose-ui-tooling").get())
+                add("debugImplementation", universe.findLibrary("androidx-compose-ui-test-manifest").get())
+                add("androidTestImplementation", universe.findLibrary("androidx-compose-ui-test-junit4").get())
 
                 androidApp.dependencies?.implementations?.forEach {
                     add("implementation", it)
@@ -520,14 +531,20 @@ class GradleSettingsPlugin : Plugin<Settings> {
                 }
             }
 
-            // todo: externalize version for dependabot updates
+            val props = Properties()
+            GradlePlugin::class.java.getResourceAsStream("/META-INF/kotlin-universe-catalog.properties")?.use {
+                props.load(it)
+            }
+
+            val kotlinVersionCatalogVersion = props.getProperty("version")
+
             settings.dependencyResolutionManagement.versionCatalogs {
                 create("universe") {
-                    from("com.jamesward.kotlin-universe-catalog:stables:2023.11.10-4")
+                    from("com.jamesward.kotlin-universe-catalog:stables:$kotlinVersionCatalogVersion")
                 }
 
                 create("universeunstable") {
-                    from("com.jamesward.kotlin-universe-catalog:unstables:2023.11.10-4")
+                    from("com.jamesward.kotlin-universe-catalog:unstables:$kotlinVersionCatalogVersion")
                 }
             }
 
@@ -536,3 +553,4 @@ class GradleSettingsPlugin : Plugin<Settings> {
         }
     }
 }
+

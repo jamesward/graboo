@@ -22,7 +22,6 @@ import okio.FileSystem
 import okio.Path
 import okio.Path.Companion.toPath
 import platform.posix.exit
-import platform.posix.fgets
 
 @kotlinx.serialization.Serializable
 data class AvailableReleases(val most_recent_lts: Int)

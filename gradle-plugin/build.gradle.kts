@@ -28,19 +28,37 @@ kotlin {
 }
 
 dependencies {
-    implementation(universe.kotlin.gradle.plugin)
+    // todo: temporary down-bump for compose
+    //implementation(universe.kotlin.gradle.plugin)
+    //implementation(universe.kotlin.allopen)
+    implementation("org.jetbrains.kotlin:kotlin-allopen:1.9.20")
+    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.20")
+
     implementation(universe.foojay.resolver)
+
+    // this is the kotlin-universe-catalog used by graboo projects
+    implementation("com.jamesward.kotlin-universe-catalog:gradle-plugin:2023.11.28-3")
+
+    // maybe another way to being version catalog pre-compiled stuff in
+    //compileOnly(files(universe.javaClass.superclass.protectionDomain.codeSource.location))
+
     implementation(universe.kotlin.power.assert.gradle)
     implementation(universe.spring.boot.gradle.plugin)
     implementation(universe.spring.gradle.dependency.management.plugin)
     implementation(universe.graalvm.buildtools.native.gradle.plugin)
-    implementation(universe.kotlin.allopen)
+
     implementation(universe.android.gradle)
 
     testImplementation(gradleTestKit())
     testImplementation(universe.junit.jupiter)
     testRuntimeOnly(universe.junit.platform.launcher)
 }
+
+/*
+tasks.withType<Jar> {
+    from(file(universe.javaClass.superclass.protectionDomain.codeSource.location))
+}
+ */
 
 // todo: cleanup tmp or move to test
 val copyExamples = tasks.create<Copy>("copyExamples") {
