@@ -62,19 +62,28 @@ jobs:
 #    needs: [test]
     strategy:
       matrix:
-        os: [macos, ubuntu, windows]
+        target: [macos-arm64, macos-x64, ubuntu-x64, windows-x64]
         include:
-          - os: ubuntu
+          - target: ubuntu-x64
+            os: ubuntu
             runs: ubuntu-latest
             platform-name: linuxX64
             release-file: bootstrapper.kexe
             asset-name: graboo-linux-x64
-          - os: macos
+          - target: macos-arm64
+            os: macos
             runs: macos-latest
             platform-name: macosArm64
             release-file: bootstrapper.kexe
             asset-name: graboo-macos-arm64
-          - os: windows
+          - target: macos-x64
+            os: macos
+            runs: macos-latest
+            platform-name: macosX64
+            release-file: bootstrapper.kexe
+            asset-name: graboo-macos-x64
+          - target: windows-x64
+            os: windows
             runs: windows-latest
             platform-name: mingwX64
             release-file: bootstrapper.exe
@@ -101,7 +110,7 @@ jobs:
 
       - name: graboo executable
         run: |
-          ./gradlew :bootstrapper:linkReleaseExecutable
+          ./gradlew :bootstrapper:linkReleaseExecutable${{ matrix.platform-name }}
           ls bootstrapper/build/bin
           ls bootstrapper/build/bin/${{ matrix.platform-name }}/releaseExecutable
 

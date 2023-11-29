@@ -44,6 +44,14 @@ kotlin {
                 }
             }
         }
+
+        macosX64 {
+            binaries {
+                executable(listOf(DEBUG, RELEASE)) {
+                    entryPoint = "main"
+                }
+            }
+        }
     }
 
     sourceSets {
