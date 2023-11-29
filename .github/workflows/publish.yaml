@@ -75,7 +75,7 @@ jobs:
 
       - name: upload executables
         if: ${{ steps.secret-check.outputs.available == 'true' }}
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.asset-name }}
           path: bootstrapper/build/bin/${{ matrix.platform-name }}/releaseExecutable/bootstrapper.kexe
