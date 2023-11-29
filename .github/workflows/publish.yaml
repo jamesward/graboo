@@ -99,11 +99,13 @@ jobs:
       - name: graboo executable
         run: |
           ./gradlew :bootstrapper:linkReleaseExecutable
+          ls bootstrapper/build/bin
+          ls bootstrapper/build/bin/${{ matrix.platform-name }}/releaseExecutable
 
       - name: run upx
         uses: svenstaro/upx-action@v2
         with:
-          file: bootstrapper/build/bin/${{ matrix.platform-name }}/releaseExecutable/bootstrapper.kexe
+          files: bootstrapper/build/bin/${{ matrix.platform-name }}/releaseExecutable/bootstrapper.kexe
           args: --best --lzma
 
       - name: upload executables
@@ -121,4 +123,21 @@ jobs:
           overwrite: true
           tag: ${{ github.ref }}
 
-      # todo: update graboo in examples/*/*/ ?
+      - name: update graboo
+        run: |
+          for f in examples/*/*; do cp boostrapper/scripts/* $f; done
+
+      - name: test graboo
+        run: |
+          cd examples/javaapp/hello-world
+          ./graboo run
+          # todo: verify output
+
+      - name: Commit graboo Updates
+        uses: test-room-7/action-update-file@v1
+        with:
+          file-path: |
+            examples/*/*/graboo
+            examples/*/*/graboo.cmd
+          commit-msg: Update graboo
+          github-token: ${{ secrets.GITHUB_TOKEN }}
