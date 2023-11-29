@@ -66,7 +66,7 @@ suspend fun saveToTempExtractAndDelete(filename: String, to: Path, bytes: ByteAr
 
         if (exitStatus.code != 0) {
             coroutineScope {
-                cancel("Could not run: tar ${args.joinToString(" ")}")
+                cancel("Could not run: $command ${args.joinToString(" ")}")
             }
         }
     }

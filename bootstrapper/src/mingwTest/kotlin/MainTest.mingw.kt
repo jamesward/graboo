@@ -4,6 +4,6 @@ actual val testCompressedBase64: String =
         6AMAAAToAwAAaGVsbG8sIHdvcmxkClBLAQIeAwoAAAAAAKlofVdTdCT0DQAAAA0AAAAIABgAAAAA
         AAEAAAC0gQAAAABmaWxlLnR4dFVUBQADfZlnZXV4CwABBOgDAAAE6AMAAFBLBQYAAAAAAQABAE4A
         AABPAAAAAAA=
-    """.trimIndent()
+    """.trimIndent().replace("\n", "")
 
 actual val testCompressedFilename: String = "test.zip"
