@@ -125,19 +125,36 @@ jobs:
 
       - name: update graboo
         run: |
-          for f in examples/*/*; do cp boostrapper/scripts/* $f; done
+          for f in examples/*/*; do cp bootstrapper/scripts/* $f; done
 
-      - name: test graboo
+      - name: test graboo on ubuntu & mac
+        if: matrix.os != 'windows'
         run: |
           cd examples/javaapp/hello-world
           ./graboo run
           # todo: verify output
 
+      - name: test graboo
+        if: matrix.os == 'windows'
+        run: |
+          cd examples/javaapp/hello-world
+          graboo run
+          # todo: verify output
+
       - name: Commit graboo Updates
+        if: matrix.os == 'ubuntu'
         uses: test-room-7/action-update-file@v1
         with:
           file-path: |
             examples/*/*/graboo
-            examples/*/*/graboo.cmd
           commit-msg: Update graboo
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Commit graboo Updates
+        if: matrix.os == 'windows'
+        uses: test-room-7/action-update-file@v1
+        with:
+          file-path: |
+            examples/*/*/graboo.cmd
+          commit-msg: Update graboo.cmd
           github-token: ${{ secrets.GITHUB_TOKEN }}
