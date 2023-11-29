@@ -22,6 +22,8 @@ import okio.FileSystem
 import okio.Path
 import okio.Path.Companion.toPath
 import platform.posix.exit
+import kotlin.experimental.ExperimentalNativeApi
+import kotlin.native.Platform
 
 @kotlinx.serialization.Serializable
 data class AvailableReleases(val most_recent_lts: Int)
@@ -86,20 +88,30 @@ suspend fun chunkedDownload(url: String, bytes: ByteArray = byteArrayOf(), start
     if (downloadGet.status == HttpStatusCode.PartialContent && hasMore) {
         chunkedDownload(url, theseBytes, theseBytes.size, chunkSize)
     }
-    else {
+    else if (downloadGet.status == HttpStatusCode.PartialContent) {
         val contentDisposition = downloadGet.headers[HttpHeaders.ContentDisposition]
         val filename = contentDisposition?.removePrefix("attachment; filename=") ?: url.substringAfterLast('/')
         filename to theseBytes
+    }
+    else {
+        throw Exception("Could not fetch $url - ${downloadGet.status}")
     }
 }
 
 
 // todo: Download stops at 10MB so we chunk it
+@OptIn(ExperimentalNativeApi::class)
 suspend fun getLatestJdk(): Pair<String, ByteArray> = run {
     val availableReleasesUrl = "https://api.adoptium.net/v3/info/available_releases"
     val availableReleases = client.get(availableReleasesUrl).body<AvailableReleases>()
-    val os = "linux"
-    val arch = "x64"
+
+    val (os, arch) = when (Platform.osFamily to Platform.cpuArchitecture) {
+        (OsFamily.MACOSX to CpuArchitecture.ARM64) -> "mac" to "aarch64"
+        (OsFamily.LINUX to CpuArchitecture.X64) -> "linux" to "x64"
+        (OsFamily.WINDOWS to CpuArchitecture.X64) -> "windows" to "x64"
+        else -> throw Exception("Could not run: unsupported OS ${Platform.osFamily} or architecture ${Platform.cpuArchitecture}")
+    }
+
     val downloadUrl = "https://api.adoptium.net/v3/binary/latest/${availableReleases.most_recent_lts}/ga/$os/$arch/jdk/hotspot/normal/eclipse?project=jdk"
 
     chunkedDownload(downloadUrl)
@@ -125,7 +137,7 @@ suspend fun runGradleWrapper(grabooDir: Path, jdk: Path, args: Array<String>) = 
         writeUtf8("""
             distributionBase=GRADLE_USER_HOME
             distributionPath=wrapper/dists
-            distributionUrl=https\://services.gradle.org/distributions/gradle-8.4-bin.zip
+            distributionUrl=https\://services.gradle.org/distributions/gradle-8.5-bin.zip
             networkTimeout=10000
             validateDistributionUrl=true
             zipStoreBase=GRADLE_USER_HOME

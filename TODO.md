@@ -7,6 +7,7 @@
   - So maybe go back to project plugins for each type of model
 - Deploy on Maven Central too?
 - This build to gradleboot
+- end-to-end test: graboo (shell script) -> graboo (native) -> graboo (jvm)
 
 ## DX
 - Project initialization

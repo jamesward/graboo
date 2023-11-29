@@ -14,6 +14,7 @@ repositories {
 }
 
 dependencies {
+    // todo: to universe catalog
     implementation("org.gradle:gradle-wrapper-shared:8.4")
 
 }

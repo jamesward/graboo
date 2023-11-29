@@ -7,14 +7,11 @@ import kotlin.test.AfterClass
 import kotlin.test.BeforeClass
 import kotlin.test.assertTrue
 
+expect val testCompressedBase64: String
+expect val testCompressedFilename: String
+
 @kotlinx.cinterop.ExperimentalForeignApi
 class MainTest {
-
-    private val testTarGz = """
-        H4sIAAAAAAAAA+3RQQrCMBCF4Vl7ihxA0mRokvMIVlQChRqpx7ddFHWh4iKI+H+bgUlgHjzbSHVu
-        klKYp0/B3c+F+DZoTBrV67RPro1iQv1oIudT2QzGyHF8/e/d+4+yze6QO1supd6NueAY2+f9+/DY
-        v3dBVYyrF+nmz/vfdzn3azP2Q96uvh0GAAAAAAAAAAAAAAAAwEeubGzvnQAoAAA=
-    """.trimIndent().replace("\n", "")
 
     companion object {
         val tmpDir = FileSystem.SYSTEM_TEMPORARY_DIRECTORY / uuid4().toString()
@@ -33,8 +30,8 @@ class MainTest {
     fun extract_tar_gz() = runBlocking {
         val to = tmpDir / "extracted"
         FileSystem.SYSTEM.createDirectory(to)
-        val bytes = testTarGz.decodeBase64Bytes()
-        saveToTempExtractAndDelete("test.tar.gz", to, bytes)
+        val bytes = testCompressedBase64.decodeBase64Bytes()
+        saveToTempExtractAndDelete(testCompressedFilename, to, bytes)
 
         val extractedFile = to / "file.txt"
         val line = FileSystem.SYSTEM.read(extractedFile) {

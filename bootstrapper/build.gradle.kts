@@ -36,10 +36,12 @@ kotlin {
         }
     }
 
-    macosArm64 {
-        binaries {
-            executable(listOf(DEBUG, RELEASE)) {
-                entryPoint = "main"
+    if (org.gradle.internal.os.OperatingSystem.current().isMacOsX) {
+        macosArm64 {
+            binaries {
+                executable(listOf(DEBUG, RELEASE)) {
+                    entryPoint = "main"
+                }
             }
         }
     }
