@@ -12,17 +12,25 @@ jobs:
   build:
     name: publish
     needs: [test]
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [macos, ubuntu, windows]
+        include:
+          - os: ubuntu
+            runs: ubuntu-latest
+            platform-name: linuxX64
+            asset-name: graboo-linux-x64
+          - os: macos
+            runs: macos-latest
+            platform-name: macosArm64
+            asset-name: graboo-macos-arm64
+          - os: windows
+            runs: windows-latest
+            platform-name: mingwX64
+            asset-name: graboo-windows-x64.exe
+    runs-on: ${{ matrix.runs }}
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup Gradle
-        uses: gradle/gradle-build-action@v2
-
       - id: secret-check
         name: Check for Secret Availability
         run: |
@@ -31,6 +39,16 @@ jobs:
           else
             echo "available=false" >> $GITHUB_OUTPUT;
           fi
+
+      - name: Checkout
+        if: ${{ steps.secret-check.outputs.available == 'true' }}
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Gradle
+        if: ${{ steps.secret-check.outputs.available == 'true' }}
+        uses: gradle/gradle-build-action@v2
 
       - name: Publish
         if: ${{ steps.secret-check.outputs.available == 'true' }}
@@ -43,32 +61,32 @@ jobs:
         run: |
           echo "version=$(./gradlew :version -q)" >> $GITHUB_OUTPUT
 
-      - name: graboo executables
+      - name: graboo executable for ${{ matrix.os }}
         if: ${{ steps.secret-check.outputs.available == 'true' }}
         run: |
-          ./gradlew :bootstrapper:linkReleaseExecutableLinuxX64
+          ./gradlew :bootstrapper:linkReleaseExecutable
 
-      - name: run upx
+      - name: run upx for ${{ matrix.os }}
         if: ${{ steps.secret-check.outputs.available == 'true' }}
         uses: svenstaro/upx-action@v2
         with:
-          file: bootstrapper/build/bin/linuxX64/releaseExecutable/bootstrapper.kexe
+          file: bootstrapper/build/bin/${{ matrix.platform-name }}/releaseExecutable/bootstrapper.kexe
           args: --best --lzma
 
       - name: upload executables
         if: ${{ steps.secret-check.outputs.available == 'true' }}
         uses: actions/upload-artifact@v2
         with:
-          name: graboo
-          path: bootstrapper/build/bin/linuxX64/releaseExecutable/bootstrapper.kexe
+          name: ${{ matrix.asset-name }}
+          path: bootstrapper/build/bin/${{ matrix.platform-name }}/releaseExecutable/bootstrapper.kexe
 
       - name: release binaries
         if: ${{ steps.secret-check.outputs.available == 'true' }}
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: bootstrapper/build/bin/linuxX64/releaseExecutable/bootstrapper.kexe
-          asset_name: graboo
+          file: bootstrapper/build/bin/${{ matrix.platform-name }}/releaseExecutable/bootstrapper.kexe
+          asset_name: ${{ matrix.asset-name }}
           overwrite: true
           tag: ${{ github.ref }}
 

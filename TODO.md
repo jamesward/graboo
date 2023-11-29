@@ -22,6 +22,9 @@
     - Continuous build, reload on build changes, etc
   - `graboo` native launcher
     - How much do we put in the launcher? Wrapper is built-in. Settings plugin? Can we put gradle.properties defaults in?
+    - https://github.com/jart/cosmopolitan for αcτµαlly pδrταblε εxεcµταblε
+      - Option 1) Thin APE Wrapper that downloads JDK & Graboo
+      - Option 2) Kotlin/Native APE Binary (may be too large for git repo use / not sure about upx support)
 - two-way tooling
   - Compile kts and load the class instead of parse?
   - Add dependency
