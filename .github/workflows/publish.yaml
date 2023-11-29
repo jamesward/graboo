@@ -9,27 +9,9 @@ jobs:
   test:
     uses: ./.github/workflows/test.yaml
 
-  build:
-    name: publish
+  publish-plugin:
     needs: [test]
-    strategy:
-      matrix:
-        os: [macos, ubuntu, windows]
-        include:
-          - os: ubuntu
-            runs: ubuntu-latest
-            platform-name: linuxX64
-            asset-name: graboo-linux-x64
-          - os: macos
-            runs: macos-latest
-            platform-name: macosArm64
-            asset-name: graboo-macos-arm64
-          - os: windows
-            runs: windows-latest
-            platform-name: mingwX64
-            asset-name: graboo-windows-x64.exe
-    runs-on: ${{ matrix.runs }}
-
+    runs-on: ubuntu-latest
     steps:
       - id: secret-check
         name: Check for Secret Availability
@@ -61,37 +43,6 @@ jobs:
         run: |
           echo "version=$(./gradlew :version -q)" >> $GITHUB_OUTPUT
 
-      - name: graboo executable for ${{ matrix.os }}
-        if: ${{ steps.secret-check.outputs.available == 'true' }}
-        run: |
-          ./gradlew :bootstrapper:linkReleaseExecutable
-
-      - name: run upx for ${{ matrix.os }}
-        if: ${{ steps.secret-check.outputs.available == 'true' }}
-        uses: svenstaro/upx-action@v2
-        with:
-          file: bootstrapper/build/bin/${{ matrix.platform-name }}/releaseExecutable/bootstrapper.kexe
-          args: --best --lzma
-
-      - name: upload executables
-        if: ${{ steps.secret-check.outputs.available == 'true' }}
-        uses: actions/upload-artifact@v3
-        with:
-          name: ${{ matrix.asset-name }}
-          path: bootstrapper/build/bin/${{ matrix.platform-name }}/releaseExecutable/bootstrapper.kexe
-
-      - name: release binaries
-        if: ${{ steps.secret-check.outputs.available == 'true' }}
-        uses: svenstaro/upload-release-action@v2
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: bootstrapper/build/bin/${{ matrix.platform-name }}/releaseExecutable/bootstrapper.kexe
-          asset_name: ${{ matrix.asset-name }}
-          overwrite: true
-          tag: ${{ github.ref }}
-
-      # todo: update graboo in examples/*/*/ ?
-
       - name: Update Versions
         if: ${{ steps.secret-check.outputs.available == 'true' }}
         run: |
@@ -105,3 +56,58 @@ jobs:
             examples/*/*/settings.gradle.kts
           commit-msg: Update version
           github-token: ${{ secrets.GITHUB_TOKEN }}
+
+  publish-executables:
+    needs: [test]
+    strategy:
+      matrix:
+        os: [macos, ubuntu, windows]
+        include:
+          - os: ubuntu
+            runs: ubuntu-latest
+            platform-name: linuxX64
+            asset-name: graboo-linux-x64
+          - os: macos
+            runs: macos-latest
+            platform-name: macosArm64
+            asset-name: graboo-macos-arm64
+          - os: windows
+            runs: windows-latest
+            platform-name: mingwX64
+            asset-name: graboo-windows-x64.exe
+    runs-on: ${{ matrix.runs }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
+
+      - name: graboo executable
+        run: |
+          ./gradlew :bootstrapper:linkReleaseExecutable
+
+      - name: run upx
+        uses: svenstaro/upx-action@v2
+        with:
+          file: bootstrapper/build/bin/${{ matrix.platform-name }}/releaseExecutable/bootstrapper.kexe
+          args: --best --lzma
+
+      - name: upload executables
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.asset-name }}
+          path: bootstrapper/build/bin/${{ matrix.platform-name }}/releaseExecutable/bootstrapper.kexe
+
+      - name: release binaries
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: bootstrapper/build/bin/${{ matrix.platform-name }}/releaseExecutable/bootstrapper.kexe
+          asset_name: ${{ matrix.asset-name }}
+          overwrite: true
+          tag: ${{ github.ref }}
+
+      # todo: update graboo in examples/*/*/ ?
