@@ -67,14 +67,17 @@ jobs:
           - os: ubuntu
             runs: ubuntu-latest
             platform-name: linuxX64
+            release-file: bootstrapper.kexe
             asset-name: graboo-linux-x64
           - os: macos
             runs: macos-latest
             platform-name: macosArm64
+            release-file: bootstrapper.kexe
             asset-name: graboo-macos-arm64
           - os: windows
             runs: windows-latest
             platform-name: mingwX64
+            release-file: bootstrapper.exe
             asset-name: graboo-windows-x64.exe
     runs-on: ${{ matrix.runs }}
     steps:
@@ -105,20 +108,20 @@ jobs:
       - name: run upx
         uses: svenstaro/upx-action@v2
         with:
-          files: bootstrapper/build/bin/${{ matrix.platform-name }}/releaseExecutable/bootstrapper.kexe
+          files: bootstrapper/build/bin/${{ matrix.platform-name }}/releaseExecutable/${{ matrix.release-file }}
           args: --best --lzma
 
       - name: upload executables
         uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.asset-name }}
-          path: bootstrapper/build/bin/${{ matrix.platform-name }}/releaseExecutable/bootstrapper.kexe
+          path: bootstrapper/build/bin/${{ matrix.platform-name }}/releaseExecutable/${{ matrix.release-file }}
 
       - name: release binaries
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: bootstrapper/build/bin/${{ matrix.platform-name }}/releaseExecutable/bootstrapper.kexe
+          file: bootstrapper/build/bin/${{ matrix.platform-name }}/releaseExecutable/${{ matrix.release-file }}
           asset_name: ${{ matrix.asset-name }}
           overwrite: true
           tag: ${{ github.ref }}
