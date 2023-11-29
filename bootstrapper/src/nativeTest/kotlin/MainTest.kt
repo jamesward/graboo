@@ -27,7 +27,7 @@ class MainTest {
     }
 
     @Test
-    fun extract_tar_gz() = runBlocking {
+    fun saveToTempExtractAndDelete_works() = runBlocking {
         val to = tmpDir / "extracted"
         FileSystem.SYSTEM.createDirectory(to)
         val bytes = testCompressedBase64.decodeBase64Bytes()

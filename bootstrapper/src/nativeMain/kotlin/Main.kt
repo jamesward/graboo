@@ -2,17 +2,13 @@ import com.benasher44.uuid.uuid4
 import com.kgit2.process.Command
 import io.ktor.client.*
 import io.ktor.client.call.*
-import io.ktor.client.plugins.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.util.*
-import io.ktor.utils.io.*
-import io.ktor.utils.io.core.*
 import kotlinx.cinterop.ExperimentalForeignApi
-import kotlinx.cinterop.refTo
 import kotlinx.cinterop.toKString
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
@@ -40,7 +36,7 @@ private val client = HttpClient {
 
 // todo: progress indicator
 // suspend indicates the side-effect
-@kotlinx.cinterop.ExperimentalForeignApi
+@ExperimentalForeignApi
 suspend fun saveToTempExtractAndDelete(filename: String, to: Path, bytes: ByteArray) {
     val tmpDir = FileSystem.SYSTEM_TEMPORARY_DIRECTORY / uuid4().toString()
 
@@ -52,17 +48,25 @@ suspend fun saveToTempExtractAndDelete(filename: String, to: Path, bytes: ByteAr
         }
 
         FileSystem.SYSTEM.createDirectory(to, false)
-        val argsString = "-x -f $archive -C $to --strip-components=1"
-        val args = argsString.split("\\s+".toRegex()).toTypedArray()
 
-        val exitStatus = Command("tar")
+        val (command, args) = if (filename.endsWith(".zip")) {
+            "powershell" to arrayOf("-command", "\"Expand-Archive '$archive' '$to'\"")
+        }
+        else if (filename.endsWith(".tar.gz")) {
+            "tar" to "-x -f $archive -C $to --strip-components=1".split("\\s+".toRegex()).toTypedArray()
+        }
+        else {
+            throw Exception("Could not run: unsupported file $filename")
+        }
+
+        val exitStatus = Command(command)
             .args(*args)
             .spawn()
             .wait()
 
         if (exitStatus.code != 0) {
             coroutineScope {
-                cancel("Could not run: tar $argsString")
+                cancel("Could not run: tar ${args.joinToString(" ")}")
             }
         }
     }
@@ -100,6 +104,7 @@ suspend fun chunkedDownload(url: String, bytes: ByteArray = byteArrayOf(), start
 
 
 // todo: Download stops at 10MB so we chunk it
+
 @OptIn(ExperimentalNativeApi::class)
 suspend fun getLatestJdk(): Pair<String, ByteArray> = run {
     val availableReleasesUrl = "https://api.adoptium.net/v3/info/available_releases"
@@ -118,7 +123,7 @@ suspend fun getLatestJdk(): Pair<String, ByteArray> = run {
 }
 
 // todo: stream output
-@kotlinx.cinterop.ExperimentalForeignApi
+@ExperimentalForeignApi
 suspend fun runGradleWrapper(grabooDir: Path, jdk: Path, args: Array<String>) = run {
     val bootwrapperJar = grabooDir / "bootwrapper.jar"
 
@@ -204,7 +209,7 @@ fun main(args: Array<String>): Unit = runBlocking {
 
             // todo: check file hash
 
-            val version = filename.removeSuffix(".tar.gz").substringAfter("hotspot_")
+            val version = filename.removeSuffix(".tar.gz").removeSuffix(".zip").substringAfter("hotspot_")
 
             FileSystem.SYSTEM.delete(currentProps)
             FileSystem.SYSTEM.write(currentProps, true) {
