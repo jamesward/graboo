@@ -1,0 +1,32 @@
+#!/bin/sh
+
+case "`uname`" in
+  MINGW*) exec_name=graboo-windown-x64.exe;;
+  Darwin*) exec_name=graboo-macos-arm64;;
+  Linux*) exec_name=graboo-linux-x64;;
+  *)
+    echo "Platform not supported"
+    exit 1
+    ;;
+esac
+
+# todo auto-update
+
+mkdir -p $HOME/.graboo
+
+executable=$HOME/.graboo/$exec_name
+
+if [ ! -e "$executable" ] ; then
+  url="https://github.com/jamesward/graboo/releases/latest/download/$exec_name"
+  if command -v wget > /dev/null; then
+    wget --quiet "$url" -O $executable
+  elif command -v curl > /dev/null; then
+    curl -q -o "$url" "$executable" -f -L
+  else
+    echo "Could not download $url"
+  fi
+
+  chmod +x $executable
+fi
+
+exec "$executable" "$@"
