@@ -139,8 +139,8 @@ jobs:
         run: |
           for f in examples/*/*; do cp -p bootstrapper/scripts/* $f; done
 
-      - name: test graboo on ubuntu & mac
-        if: matrix.os != 'windows'
+      - name: test graboo on ubuntu
+        if: matrix.target == 'ubuntu-x64' || matrix.target == 'macos-x64'
         run: |
           cd examples/javaapp/hello-world
           ./graboo run
