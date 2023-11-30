@@ -37,7 +37,7 @@ dependencies {
     implementation(universe.foojay.resolver)
 
     // this is the kotlin-universe-catalog used by graboo projects
-    implementation("com.jamesward.kotlin-universe-catalog:gradle-plugin:2023.11.28-3")
+    implementation("com.jamesward.kotlin-universe-catalog:gradle-plugin:2023.11.30-2")
 
     // maybe another way to being version catalog pre-compiled stuff in
     //compileOnly(files(universe.javaClass.superclass.protectionDomain.codeSource.location))
