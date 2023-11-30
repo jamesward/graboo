@@ -7,5 +7,5 @@ pluginManagement {
 }
 
 plugins {
-    id("com.jamesward.gradleboot") version "0.0.28"
+    id("com.jamesward.gradleboot") version "0.0.29"
 }
