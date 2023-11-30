@@ -39,41 +39,47 @@ private val client = HttpClient {
 // suspend indicates the side-effect
 @ExperimentalForeignApi
 suspend fun saveToTempExtractAndDelete(filename: String, to: Path, bytes: ByteArray) {
-    // GitHub Actions has the temp dir as c:\RUNNER~1\blah which doesn't work
-    val systemTempDir = getenv("LOCALAPPDATA")?.toKString()?.toPath()?.div("Temp") ?: FileSystem.SYSTEM_TEMPORARY_DIRECTORY
-
-    val tmpDir = systemTempDir / uuid4().toString()
-
-    println(tmpDir)
+    val tmpDir = FileSystem.SYSTEM_TEMPORARY_DIRECTORY / uuid4().toString()
 
     try {
-        FileSystem.SYSTEM.createDirectory(tmpDir, true)
+        FileSystem.SYSTEM.createDirectory(tmpDir)
         val archive = tmpDir / filename
-        println(archive)
-        FileSystem.SYSTEM.write(archive, true) {
+        FileSystem.SYSTEM.write(archive, false) {
             write(bytes)
         }
 
-        FileSystem.SYSTEM.createDirectory(to, false)
-
         val (command, args) = if (filename.endsWith(".zip")) {
-            "powershell" to arrayOf("-command", "\"Expand-Archive '$archive' '$to'\"")
+            "powershell" to arrayOf("-command", "\"Expand-Archive '$archive' '$tmpDir'\"")
         }
         else if (filename.endsWith(".tar.gz")) {
-            "tar" to "-x -f $archive -C $to --strip-components=1".split("\\s+".toRegex()).toTypedArray()
+            "tar" to "-x -f $archive -C $tmpDir".split("\\s+".toRegex()).toTypedArray()
         }
         else {
             throw Exception("Could not run: unsupported file $filename")
         }
 
         val exitStatus = Command(command)
-            .args(*args)
-            .spawn()
-            .wait()
+                .args(*args)
+                .spawn()
+                .wait()
 
         if (exitStatus.code != 0) {
             coroutineScope {
                 cancel("Could not run: $command ${args.joinToString(" ")}")
+            }
+        }
+
+        // The contents are in a subdir and we need them not to be
+        FileSystem.SYSTEM.delete(archive)
+
+        FileSystem.SYSTEM.list(tmpDir).forEach { file ->
+            if (FileSystem.SYSTEM.metadata(file).isDirectory) {
+                FileSystem.SYSTEM.atomicMove(file, to)
+            }
+            else {
+                FileSystem.SYSTEM.createDirectory(to, false)
+                val relativeFile = file.relativeTo(tmpDir)
+                FileSystem.SYSTEM.atomicMove(file, to / relativeFile)
             }
         }
     }
