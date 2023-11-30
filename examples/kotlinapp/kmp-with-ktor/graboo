@@ -30,7 +30,7 @@ if [ ! -e "$executable" ] ; then
   if command -v wget > /dev/null; then
     wget --quiet "$url" -O $executable
   elif command -v curl > /dev/null; then
-    curl -q -o "$url" "$executable" -f -L
+    curl -q -L -f -o "$executable" "$url"
   else
     echo "Could not download $url"
   fi
