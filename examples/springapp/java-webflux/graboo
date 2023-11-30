@@ -3,8 +3,10 @@
 case "`uname`" in
   MINGW*) exec_name=graboo-windown-x64.exe;;
   Darwin*)
+    echo `uname -p`
+    echo `uname -m`
     case "`uname -p`" in
-      x86_64) exec_name=graboo-macos-x64;;
+      i386) exec_name=graboo-macos-x64;;
       arm) exec_name=graboo-macos-arm64;;
       *)
         echo "Architecture not supported"
