@@ -120,6 +120,7 @@ jobs:
 #          ls bootstrapper/build/bin/${{ matrix.platform-name }}/releaseExecutable
 
       - name: run upx
+        if: false
         uses: svenstaro/upx-action@v2
         with:
           files: bootstrapper/build/bin/${{ matrix.platform-name }}/releaseExecutable/${{ matrix.release-file }}
