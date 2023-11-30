@@ -1,7 +1,7 @@
 @echo off
 
-set GRABOO_DIR="%LOCALAPPDATA%\graboo"
-set EXE="%GRABOO_DIR%\graboo-windows-x64.exe"
+set GRABOO_DIR=%LOCALAPPDATA%\graboo
+set EXE=%GRABOO_DIR%\graboo-windows-x64.exe
 
 if exist %EXE% goto runGraboo
 
