@@ -60,6 +60,8 @@ jobs:
 
   publish-executables:
     needs: [publish-plugin]
+    permissions:
+      contents: write
     strategy:
       matrix:
         target: [macos-arm64, macos-x64, ubuntu-x64, windows-x64]
@@ -137,37 +139,38 @@ jobs:
           tag: ${{ github.ref }}
 
       - name: update graboo
-        if: matrix.os == 'ubuntu' || matrix.os == 'windows'
+        if: matrix.os == 'ubuntu'
         run: |
-          for f in examples/*/*; do cp -p bootstrapper/scripts/* $f; done
+          for f in examples/*/*; do cp -p bootstrapper/scripts/graboo $f; done
+
+      - name: update graboo.cmd
+        if: matrix.os == 'windows'
+        run: |
+          dir "examples/*/*" | foreach-object { copy-item -path bootstrapper/scripts/graboo.cmd -destination $_ }
 
       - name: test graboo on ubuntu
         if: matrix.target == 'ubuntu-x64' || matrix.target == 'macos-x64'
         run: |
           cd examples/javaapp/hello-world
-          echo $(./graboo run) | grep --quiet "hello, world"
+          output=$(./graboo run)
+          echo $output
+          echo $output | grep --quiet "hello, world"
 
       - name: test graboo
         if: matrix.os == 'windows'
         run: |
           cd examples/javaapp/hello-world
-          graboo run
           # todo: verify output
+          graboo run
 
       - name: Commit graboo Updates
         if: matrix.os == 'ubuntu'
-        uses: test-room-7/action-update-file@v1
+        uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          file-path: |
-            examples/*/*/graboo
-          commit-msg: Update graboo
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          file_pattern: 'examples/*/*/graboo'
 
       - name: Commit graboo.cmd Updates
         if: matrix.os == 'windows'
-        uses: test-room-7/action-update-file@v1
+        uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          file-path: |
-            examples/*/*/graboo.cmd
-          commit-msg: Update graboo.cmd
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          file_pattern: 'examples/*/*/graboo.cmd'
