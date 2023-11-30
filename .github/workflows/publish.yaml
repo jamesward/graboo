@@ -65,26 +65,27 @@ jobs:
       contents: write
     strategy:
       matrix:
-        target: [macos-arm64, macos-x64, ubuntu-x64, windows-x64]
+        #target: [macos-arm64, macos-x64, ubuntu-x64, windows-x64]
+        target: [windows-x64]
         include:
-          - target: ubuntu-x64
-            os: ubuntu
-            runs: ubuntu-latest
-            platform-name: linuxX64
-            release-file: bootstrapper.kexe
-            asset-name: graboo-linux-x64
-          - target: macos-arm64
-            os: macos
-            runs: macos-latest
-            platform-name: macosArm64
-            release-file: bootstrapper.kexe
-            asset-name: graboo-macos-arm64
-          - target: macos-x64
-            os: macos
-            runs: macos-latest
-            platform-name: macosX64
-            release-file: bootstrapper.kexe
-            asset-name: graboo-macos-x64
+#          - target: ubuntu-x64
+#            os: ubuntu
+#            runs: ubuntu-latest
+#            platform-name: linuxX64
+#            release-file: bootstrapper.kexe
+#            asset-name: graboo-linux-x64
+#          - target: macos-arm64
+#            os: macos
+#            runs: macos-latest
+#            platform-name: macosArm64
+#            release-file: bootstrapper.kexe
+#            asset-name: graboo-macos-arm64
+#          - target: macos-x64
+#            os: macos
+#            runs: macos-latest
+#            platform-name: macosX64
+#            release-file: bootstrapper.kexe
+#            asset-name: graboo-macos-x64
           - target: windows-x64
             os: windows
             runs: windows-latest

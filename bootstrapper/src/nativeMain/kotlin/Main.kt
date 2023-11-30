@@ -18,6 +18,7 @@ import okio.FileSystem
 import okio.Path
 import okio.Path.Companion.toPath
 import platform.posix.exit
+import platform.posix.getenv
 import kotlin.experimental.ExperimentalNativeApi
 import kotlin.native.Platform
 
@@ -38,6 +39,15 @@ private val client = HttpClient {
 // suspend indicates the side-effect
 @ExperimentalForeignApi
 suspend fun saveToTempExtractAndDelete(filename: String, to: Path, bytes: ByteArray) {
+    println(getenv("TEMP"))
+    println(getenv("TEMP")?.toKString()?.toPath())
+
+    println(getenv("TMP"))
+    println(getenv("TMP")?.toKString()?.toPath())
+
+    println(getenv("USERPROFILE"))
+    println(getenv("USERPROFILE")?.toKString()?.toPath())
+
     val tmpDir = FileSystem.SYSTEM_TEMPORARY_DIRECTORY / uuid4().toString()
 
     println(tmpDir)
