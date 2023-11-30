@@ -9,6 +9,8 @@ case "`uname`" in
       *)
         echo "Architecture not supported"
         exit 1
+        ;;
+    esac
     ;;
   Linux*) exec_name=graboo-linux-x64;;
   *)
