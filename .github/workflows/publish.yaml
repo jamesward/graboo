@@ -6,12 +6,12 @@ on:
 concurrency: ci-${{ github.ref }}
 
 jobs:
-#  test:
-#    uses: ./.github/workflows/test.yaml
+  test:
+    uses: ./.github/workflows/test.yaml
 
   publish-plugin:
     if: false
-#    needs: [test]
+    needs: [test]
     runs-on: ubuntu-latest
     steps:
       - id: secret-check
@@ -60,7 +60,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
   publish-executables:
-#    needs: [publish-plugin]
+    needs: [publish-plugin]
     permissions:
       contents: write
     strategy:
@@ -115,9 +115,6 @@ jobs:
       - name: graboo executable
         run: |
           ./gradlew :bootstrapper:linkReleaseExecutable${{ matrix.platform-name }}
-#          ls -al bootstrapper/scripts/
-#          ls bootstrapper/build/bin
-#          ls bootstrapper/build/bin/${{ matrix.platform-name }}/releaseExecutable
 
       - name: run upx
         if: false
@@ -163,7 +160,6 @@ jobs:
         if: matrix.os == 'windows'
         run: |
           cd examples/javaapp/hello-world
-          dir
           # todo: verify output
           .\graboo.cmd run
 

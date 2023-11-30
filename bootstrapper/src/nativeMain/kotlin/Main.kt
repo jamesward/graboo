@@ -195,7 +195,7 @@ fun main(args: Array<String>): Unit = runBlocking {
         else -> "HOME"
     }
 
-    val home = platform.posix.getenv(storageDirEnv)?.toKString()
+    val home = getenv(storageDirEnv)?.toKString()
     if (home == null) {
         println("Could not read $storageDirEnv dir")
         exit(1)
