@@ -137,6 +137,7 @@ suspend fun getLatestJdk(): Pair<String, ByteArray> = run {
 }
 
 // todo: stream output
+@OptIn(ExperimentalNativeApi::class)
 @ExperimentalForeignApi
 suspend fun runGradleWrapper(grabooDir: Path, jdk: Path, args: Array<String>) = run {
     val bootwrapperJar = grabooDir / "bootwrapper.jar"
@@ -164,7 +165,12 @@ suspend fun runGradleWrapper(grabooDir: Path, jdk: Path, args: Array<String>) = 
         """.trimIndent())
     }
 
-    val javaExec = jdk / "bin" / "java"
+    val javaExec = if (Platform.osFamily == OsFamily.MACOSX) {
+        jdk / "Contents" / "Home" / "bin" / "java"
+    }
+    else {
+        jdk / "bin" / "java"
+    }
 
     val fullArgs = arrayOf("-Dgraboo.dir=$grabooDir", "-jar", bootwrapperJar.toString()) + args
 
