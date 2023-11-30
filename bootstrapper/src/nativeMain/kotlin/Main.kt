@@ -39,16 +39,10 @@ private val client = HttpClient {
 // suspend indicates the side-effect
 @ExperimentalForeignApi
 suspend fun saveToTempExtractAndDelete(filename: String, to: Path, bytes: ByteArray) {
-    println(getenv("TEMP"))
-    println(getenv("TEMP")?.toKString()?.toPath())
+    // GitHub Actions has the temp dir as c:\RUNNER~1\blah which doesn't work
+    val systemTempDir = getenv("LOCALAPPDATA")?.toKString()?.toPath()?.div("Temp") ?: FileSystem.SYSTEM_TEMPORARY_DIRECTORY
 
-    println(getenv("TMP"))
-    println(getenv("TMP")?.toKString()?.toPath())
-
-    println(getenv("USERPROFILE"))
-    println(getenv("USERPROFILE")?.toKString()?.toPath())
-
-    val tmpDir = FileSystem.SYSTEM_TEMPORARY_DIRECTORY / uuid4().toString()
+    val tmpDir = systemTempDir / uuid4().toString()
 
     println(tmpDir)
 

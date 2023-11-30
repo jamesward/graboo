@@ -163,8 +163,6 @@ jobs:
       - name: test graboo on ${{ matrix.target }}
         if: matrix.os == 'windows'
         run: |
-          set TMP=%USERPROFILE%\AppData\Local\Temp
-          set TEMP=%USERPROFILE%\AppData\Local\Temp
           cd examples/javaapp/hello-world
           dir
           # todo: verify output
