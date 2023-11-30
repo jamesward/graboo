@@ -40,10 +40,13 @@ private val client = HttpClient {
 suspend fun saveToTempExtractAndDelete(filename: String, to: Path, bytes: ByteArray) {
     val tmpDir = FileSystem.SYSTEM_TEMPORARY_DIRECTORY / uuid4().toString()
 
+    println(tmpDir)
+
     try {
-        FileSystem.SYSTEM.createDirectory(tmpDir)
+        FileSystem.SYSTEM.createDirectory(tmpDir, true)
         val archive = tmpDir / filename
-        FileSystem.SYSTEM.write(archive, false) {
+        println(archive)
+        FileSystem.SYSTEM.write(archive, true) {
             write(bytes)
         }
 
