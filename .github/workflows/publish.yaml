@@ -150,7 +150,7 @@ jobs:
         run: |
           dir "examples/*/*" | foreach-object { copy-item -path bootstrapper/scripts/graboo.cmd -destination $_ }
 
-      - name: test graboo on ubuntu
+      - name: test graboo on ${{ matrix.target }}
         if: matrix.target == 'ubuntu-x64' || matrix.target == 'macos-x64'
         run: |
           cd examples/javaapp/hello-world
@@ -158,7 +158,7 @@ jobs:
           echo $output
           echo $output | grep --quiet "hello, world"
 
-      - name: test graboo on windows
+      - name: test graboo on ${{ matrix.target }}
         if: matrix.os == 'windows'
         run: |
           cd examples/javaapp/hello-world
