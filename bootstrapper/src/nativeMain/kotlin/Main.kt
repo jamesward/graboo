@@ -152,17 +152,17 @@ suspend fun runGradleWrapper(grabooDir: Path, jdk: Path, args: Array<String>) = 
     }
 
     val javaExec = jdk / "bin" / "java"
-    val argsString = args.joinToString(" ")
-    val cmd = "$javaExec -Dgraboo.dir=$grabooDir -jar $bootwrapperJar $argsString"
+
+    val fullArgs = arrayOf("-Dgraboo.dir=$grabooDir", "-jar", bootwrapperJar.toString()) + args
 
     val exitStatus = Command(javaExec.toString())
-        .args(*args)
+        .args(*fullArgs)
         .spawn()
         .wait()
 
     if (exitStatus.code != 0) {
         coroutineScope {
-            println("`$cmd` failed with ${exitStatus.code}")
+            println("`$javaExec ${fullArgs.joinToString(" ")}` failed with ${exitStatus.code}")
             exit(exitStatus.code)
         }
     }

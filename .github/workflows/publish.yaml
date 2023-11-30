@@ -10,7 +10,6 @@ jobs:
 #    uses: ./.github/workflows/test.yaml
 
   publish-plugin:
-    if: false
 #    needs: [test]
     runs-on: ubuntu-latest
     steps:
@@ -59,7 +58,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
   publish-executables:
-#    needs: [test]
+    needs: [publish-plugin]
     strategy:
       matrix:
         target: [macos-arm64, macos-x64, ubuntu-x64, windows-x64]
