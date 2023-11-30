@@ -157,12 +157,13 @@ jobs:
           echo $output
           echo $output | grep --quiet "hello, world"
 
-      - name: test graboo
+      - name: test graboo on windows
         if: matrix.os == 'windows'
         run: |
           cd examples/javaapp/hello-world
+          dir
           # todo: verify output
-          graboo run
+          .\graboo.cmd run
 
       - name: Commit graboo Updates
         if: matrix.os == 'ubuntu'
