@@ -169,11 +169,16 @@ suspend fun runGradleWrapper(grabooDir: Path, jdk: Path, args: Array<String>) = 
 }
 
 // bug: entrypoint can't be a suspend fun
-@OptIn(ExperimentalForeignApi::class)
+@OptIn(ExperimentalForeignApi::class, ExperimentalNativeApi::class)
 fun main(args: Array<String>): Unit = runBlocking {
-    val home = platform.posix.getenv("HOME")?.toKString()
+    val storageDirEnv = when(Platform.osFamily) {
+        OsFamily.WINDOWS -> "LOCALAPPDATA"
+        else -> "HOME"
+    }
+
+    val home = platform.posix.getenv(storageDirEnv)?.toKString()
     if (home == null) {
-        println("Could not read HOME dir")
+        println("Could not read $storageDirEnv dir")
         exit(1)
     }
     else {
