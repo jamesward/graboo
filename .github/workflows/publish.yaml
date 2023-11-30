@@ -37,11 +37,12 @@ jobs:
         run: |
           ./gradlew :gradle-plugin:publishPlugins -Pgradle.publish.key=${{ secrets.GRADLE_PUBLISH_KEY }} -Pgradle.publish.secret=${{ secrets.GRADLE_PUBLISH_SECRET }}
 
+      # todo: this doesn't fail when the gradle command fails
       - id: get-version
         name: Get Version
         if: ${{ steps.secret-check.outputs.available == 'true' }}
         run: |
-          echo "version=$(./gradlew :version -q)" >> $GITHUB_OUTPUT
+          echo "version=$(./gradlew :gradle-plugin:version -q)" >> $GITHUB_OUTPUT
 
       - name: Update Versions
         if: ${{ steps.secret-check.outputs.available == 'true' }}
@@ -110,6 +111,7 @@ jobs:
       - name: graboo executable
         run: |
           ./gradlew :bootstrapper:linkReleaseExecutable${{ matrix.platform-name }}
+          ls -al bootstrapper/scripts/
           ls bootstrapper/build/bin
           ls bootstrapper/build/bin/${{ matrix.platform-name }}/releaseExecutable
 
