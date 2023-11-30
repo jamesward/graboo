@@ -168,9 +168,11 @@ jobs:
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           file_pattern: 'examples/*/*/graboo'
+          pull: '--rebase'
 
       - name: Commit graboo.cmd Updates
         if: matrix.os == 'windows'
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           file_pattern: 'examples/*/*/graboo.cmd'
+          pull: '--rebase'
