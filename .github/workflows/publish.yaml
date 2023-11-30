@@ -10,7 +10,6 @@ jobs:
     uses: ./.github/workflows/test.yaml
 
   publish-plugin:
-    if: false
     needs: [test]
     runs-on: ubuntu-latest
     steps:
