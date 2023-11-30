@@ -112,6 +112,7 @@ suspend fun getLatestJdk(): Pair<String, ByteArray> = run {
 
     val (os, arch) = when (Platform.osFamily to Platform.cpuArchitecture) {
         (OsFamily.MACOSX to CpuArchitecture.ARM64) -> "mac" to "aarch64"
+        (OsFamily.MACOSX to CpuArchitecture.X64) -> "mac" to "x64"
         (OsFamily.LINUX to CpuArchitecture.X64) -> "linux" to "x64"
         (OsFamily.WINDOWS to CpuArchitecture.X64) -> "windows" to "x64"
         else -> throw Exception("Could not run: unsupported OS ${Platform.osFamily} or architecture ${Platform.cpuArchitecture}")
