@@ -111,9 +111,9 @@ jobs:
       - name: graboo executable
         run: |
           ./gradlew :bootstrapper:linkReleaseExecutable${{ matrix.platform-name }}
-          ls -al bootstrapper/scripts/
-          ls bootstrapper/build/bin
-          ls bootstrapper/build/bin/${{ matrix.platform-name }}/releaseExecutable
+#          ls -al bootstrapper/scripts/
+#          ls bootstrapper/build/bin
+#          ls bootstrapper/build/bin/${{ matrix.platform-name }}/releaseExecutable
 
       - name: run upx
         uses: svenstaro/upx-action@v2
@@ -137,6 +137,7 @@ jobs:
           tag: ${{ github.ref }}
 
       - name: update graboo
+        if: matrix.os == 'ubuntu' || matrix.os == 'windows'
         run: |
           for f in examples/*/*; do cp -p bootstrapper/scripts/* $f; done
 
@@ -144,8 +145,7 @@ jobs:
         if: matrix.target == 'ubuntu-x64' || matrix.target == 'macos-x64'
         run: |
           cd examples/javaapp/hello-world
-          ./graboo run
-          # todo: verify output
+          echo $(./graboo run) | grep --quiet "hello, world"
 
       - name: test graboo
         if: matrix.os == 'windows'

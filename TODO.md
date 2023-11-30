@@ -8,6 +8,7 @@
 - Deploy on Maven Central too?
 - This build to gradleboot
 - end-to-end test: graboo (shell script) -> graboo (native) -> graboo (jvm)
+- Maybe some way for the publish-executables job to get the latest from git since it is updated in publish-plugin
 
 ## DX
 - Project initialization
