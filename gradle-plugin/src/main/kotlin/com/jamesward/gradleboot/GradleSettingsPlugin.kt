@@ -396,7 +396,6 @@ class GradleSettingsPlugin : Plugin<Settings> {
             }
 
             project.dependencies {
-                // todo: universe version catalog
                 add("testImplementation", platform(universe.findLibrary("junit-bom").get()))
                 add("testImplementation", universe.findLibrary("junit-jupiter").get())
 
@@ -480,7 +479,6 @@ class GradleSettingsPlugin : Plugin<Settings> {
             }
 
             project.dependencies {
-                // todo: universe version catalog
                 add("implementation", universe.findLibrary("androidx-core-ktx").get())
                 add("implementation", universe.findLibrary("androidx-lifecycle-runtime-kts").get())
                 add("implementation", universe.findLibrary("androidx-activity-compose").get())

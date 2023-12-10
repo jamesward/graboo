@@ -62,8 +62,7 @@ kotlin {
                 implementation(universe.ktor.client.content.negotiation)
                 implementation(universe.ktor.serialization.kotlinx.json)
                 implementation(universe.benasher44.uuid)
-                // todo: to universe
-                implementation("com.kgit2:kommand:1.1.0")
+                implementation(universe.kgit2.kommand)
             }
         }
 
@@ -75,15 +74,13 @@ kotlin {
 
         mingwMain {
             dependencies {
-                // todo: to universe
-                implementation("io.ktor:ktor-client-winhttp:2.3.6")
+                implementation(universe.ktor.client.winhttp)
             }
         }
 
         macosMain {
             dependencies {
-                // todo: to universe
-                implementation("io.ktor:ktor-client-darwin:2.3.6")
+                implementation(universe.ktor.client.darwin)
             }
         }
     }

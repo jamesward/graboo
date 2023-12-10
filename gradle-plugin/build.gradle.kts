@@ -28,16 +28,13 @@ kotlin {
 }
 
 dependencies {
-    // todo: temporary down-bump for compose
-    //implementation(universe.kotlin.gradle.plugin)
-    //implementation(universe.kotlin.allopen)
-    implementation("org.jetbrains.kotlin:kotlin-allopen:1.9.20")
-    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.20")
+    implementation(universe.kotlin.gradle.plugin)
+    implementation(universe.kotlin.allopen)
 
     implementation(universe.foojay.resolver)
 
     // this is the kotlin-universe-catalog used by graboo projects
-    implementation("com.jamesward.kotlin-universe-catalog:gradle-plugin:2023.11.30-2")
+    implementation("com.jamesward.kotlin-universe-catalog:gradle-plugin:2023.12.08-6")
 
     // maybe another way to being version catalog pre-compiled stuff in
     //compileOnly(files(universe.javaClass.superclass.protectionDomain.codeSource.location))
