@@ -31,7 +31,7 @@ dependencies {
     // todo: temporary down-bump for compose
     //implementation(universe.kotlin.gradle.plugin)
     //implementation(universe.kotlin.allopen)
-    implementation("org.jetbrains.kotlin:kotlin-allopen:1.9.20")
+    implementation("org.jetbrains.kotlin:kotlin-allopen:1.9.21")
     implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.20")
 
     implementation(universe.foojay.resolver)
