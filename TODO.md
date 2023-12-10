@@ -70,4 +70,6 @@
 - `androidLib`
 - `javaApp`
 - `javaLib`
+- Dependencies:
+  - `dependencies` & `testDependencies` instead of `dependencies { implementation() }` ? Or some other default scope?
 - Note: `*Lib` need signing, publishing, docs, etc
