@@ -83,7 +83,7 @@ kotlin {
         macosMain {
             dependencies {
                 // todo: to universe
-                implementation("io.ktor:ktor-client-darwin:2.3.6")
+                implementation("io.ktor:ktor-client-darwin:2.3.7")
             }
         }
     }
