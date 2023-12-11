@@ -8,13 +8,13 @@
 - Deploy on Maven Central too?
 - This build to gradleboot
 - end-to-end test: graboo (shell script) -> graboo (native) -> graboo (jvm)
+  - Use `graboo new` instead of examples
 - Maybe some way for the publish-executables job to get the latest from git since it is updated in publish-plugin
 
 ## DX
 - Project initialization
-  - `graboo init`
+  - `graboo new`
   - graboo.dev
-    - Initially from examples
 - Gradle Usage
   - Auto-main plugin
     - Discover main
@@ -73,3 +73,5 @@
 - Dependencies:
   - `dependencies` & `testDependencies` instead of `dependencies { implementation() }` ? Or some other default scope?
 - Note: `*Lib` need signing, publishing, docs, etc
+
+## Archetypes, Platforms, 

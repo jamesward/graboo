@@ -187,85 +187,462 @@ suspend fun runGradleWrapper(grabooDir: Path, jdk: Path, args: Array<String>) = 
     }
 }
 
+// todo: Archetype options, ie Spring w/ Kotlin, Kotlin targets
+enum class Archetype {
+    SPRINGAPP,
+    KOTLINAPP,
+    JAVAAPP,
+    ANDROIDAPP;
+
+    override fun toString(): String =
+        when(this) {
+            SPRINGAPP -> "springApp"
+            KOTLINAPP -> "kotlinApp"
+            JAVAAPP -> "javaApp"
+            ANDROIDAPP -> "androidApp"
+        }
+
+    companion object {
+        operator fun invoke(s: String): Archetype? =
+            when(s.lowercase()) {
+                "springapp" -> SPRINGAPP
+                "kotlinapp" -> KOTLINAPP
+                "javaapp" -> JAVAAPP
+                "androidapp" -> ANDROIDAPP
+                else -> null
+            }
+    }
+}
+
 // bug: entrypoint can't be a suspend fun
 @OptIn(ExperimentalForeignApi::class, ExperimentalNativeApi::class)
 fun main(args: Array<String>): Unit = runBlocking {
-    val storageDirEnv = when(Platform.osFamily) {
-        OsFamily.WINDOWS -> "LOCALAPPDATA"
-        else -> "HOME"
-    }
+    // todo: windows & *nix graboo examples (i.e `./graboo`)
 
-    val home = getenv(storageDirEnv)?.toKString()
-    if (home == null) {
-        println("Could not read $storageDirEnv dir")
+    if (args.firstOrNull() == "--help") {
+        println("Create a new project:")
+        println("  graboo new <type> <dir>")
+        println()
+        println("Run Gradle task:")
+        println("  graboo <task>")
+        println()
+        println("Run the Graboo Shell:")
+        println("  graboo")
         exit(1)
     }
-    else {
-        val homePath = home.toPath()
 
-        if (!FileSystem.SYSTEM.exists(homePath)) {
-            println("Home dir ($home) does not exist")
+    if (args.firstOrNull() == "new") {
+        val (archetype, dir) = if (args.size == 2) {
+            println("Project directory:")
+            Archetype(args[2]) to readlnOrNull()
+        }
+        else if (args.size == 1) {
+            println("Project type (${Archetype.entries.joinToString(", ")}):")
+            val archetype = readlnOrNull()?.let { Archetype(it) }
+            println("Project directory:")
+            archetype to readln()
+        }
+        else {
+            Archetype(args[1]) to args[2]
+        }
+
+        if (archetype == null) {
+            println("Archetype not specified or invalid. Valid types are:")
+            println(Archetype.entries.joinToString(", "))
             exit(1)
         }
 
-        val grabooDir = homePath / ".graboo"
+        if (dir != null && FileSystem.SYSTEM.exists(dir.toPath())) {
+            println("Project dir $dir exists already")
+            exit(1)
+        }
 
-        val grabooJdk = grabooDir / "jdk"
-        FileSystem.SYSTEM.createDirectories(grabooJdk, false)
+        val projectDir = dir!!.toPath()
 
-        val currentProps = grabooJdk / "current.properties"
-        val currentVersion = if (FileSystem.SYSTEM.exists(currentProps)) {
-            val contents = FileSystem.SYSTEM.read(currentProps) {
-                readUtf8()
+        println("Creating project of type $archetype in $projectDir")
+
+        FileSystem.SYSTEM.createDirectory(projectDir)
+
+        val buildGradleKtsBody = when(archetype!!) {
+            Archetype.SPRINGAPP ->
+                """
+                jvmVersion = 17
+                """
+
+            Archetype.KOTLINAPP ->
+                """
+                mainClass = "MainKt"
+                targets {
+                    jvm(17)
+                }
+                """
+
+            Archetype.JAVAAPP ->
+                """
+                mainClass = "Main"
+                jvmVersion = 17
+                """
+
+            Archetype.ANDROIDAPP ->
+                """
+                namespace = "com.example.myapplication"
+                compileSdk = 34
+                """
+        }
+
+        val buildGradleKts = """
+            boot.$archetype {
+                $buildGradleKtsBody
             }
-            val maybeLine = contents.lines().find { it.startsWith("version=") }
-            maybeLine?.removePrefix("version=")
+        """.trimIndent()
+
+        FileSystem.SYSTEM.write(projectDir / "build.gradle.kts") {
+            writeUtf8(buildGradleKts)
         }
-        else {
-            null
-        }
 
-        // todo: update JDK to newer
-
-        val jdk = if ((currentVersion == null) || (!FileSystem.SYSTEM.exists(grabooJdk / currentVersion))) {
-            println("Downloading a JDK")
-
-            val (filename, bytes) = getLatestJdk()
-
-            // todo: check file hash
-
-            val version = filename.removeSuffix(".tar.gz").removeSuffix(".zip").substringAfter("hotspot_")
-
-            FileSystem.SYSTEM.delete(currentProps)
-            FileSystem.SYSTEM.write(currentProps, true) {
-                writeUtf8("version=$version")
+        // todo: externalize version
+        val settingsGradleKts = """
+            pluginManagement {
+                repositories {
+                    gradlePluginPortal()
+                    mavenCentral()
+                    google()
+                }
             }
 
-            val jdkDir = grabooJdk / version
+            plugins {
+                id("com.jamesward.gradleboot") version "0.0.48"
+            }
+        """.trimIndent()
 
-            // todo: stream write instead of in-memory buffer whole file
-            saveToTempExtractAndDelete(filename, jdkDir, bytes)
+        FileSystem.SYSTEM.write(projectDir / "settings.gradle.kts") {
+            writeUtf8(settingsGradleKts)
+        }
 
-            jdkDir
+        val gitignore = """
+            /.idea/
+            build/
+            /.gradle/
+        """.trimIndent()
+
+        FileSystem.SYSTEM.write(projectDir / ".gitignore") {
+            writeUtf8(gitignore)
+        }
+
+        FileSystem.SYSTEM.write(projectDir / "graboo") {
+            write(BootScripts.shScript.decodeBase64Bytes())
+        }
+
+        // todo: move to kotlin native
+        if (Platform.osFamily != OsFamily.WINDOWS) {
+            Command("chmod")
+                .args("+x", (projectDir / "graboo").toString())
+                .spawn()
+                .wait()
+        }
+
+        FileSystem.SYSTEM.write(projectDir / "graboo.cmd") {
+            write(BootScripts.cmdScript.decodeBase64Bytes())
+        }
+
+        when(archetype) {
+            Archetype.SPRINGAPP -> {
+                FileSystem.SYSTEM.createDirectories(projectDir / "src" / "main" / "java" / "com" / "example")
+                FileSystem.SYSTEM.write(projectDir / "src" / "main" / "java" / "com" / "example" / "MyApplication.java") {
+                    writeUtf8(
+                        """
+                        package com.example;
+
+                        import org.springframework.boot.SpringApplication;
+                        import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+                        @SpringBootApplication
+                        public class MyApplication {
+                            public static void main(String[] args) {
+                                SpringApplication.run(MyApplication.class, args);
+                            }
+                        }
+                        """.trimIndent()
+                    )
+                }
+
+                FileSystem.SYSTEM.createDirectories(projectDir / "src" / "test" / "java" / "com" / "example")
+                FileSystem.SYSTEM.write(projectDir / "src" / "test" / "java" / "com" / "example" / "MyApplicationTests.java") {
+                    writeUtf8(
+                        """
+                        package com.example;
+                        
+                        import org.junit.jupiter.api.Assertions;
+                        import org.junit.jupiter.api.Test;
+                        import org.springframework.boot.test.context.SpringBootTest;
+                        
+                        @SpringBootTest
+                        public class MyApplicationTests {
+                        
+                            @Test
+                            void basic() {
+                                Assertions.assertEquals("asdf", "asdf");
+                            }
+                        
+                        }
+                        """.trimIndent()
+                    )
+                }
+            }
+
+            Archetype.KOTLINAPP -> {
+                FileSystem.SYSTEM.createDirectories(projectDir / "src" / "jvmMain" / "kotlin")
+                FileSystem.SYSTEM.write(projectDir / "src" / "jvmMain" / "kotlin" / "Main.kt") {
+                    writeUtf8(
+                        """
+                        fun main() {
+                            println("hello, world")
+                        }
+                        """.trimIndent()
+                    )
+                }
+
+                FileSystem.SYSTEM.createDirectories(projectDir / "src" / "jvmTest" / "kotlin")
+                FileSystem.SYSTEM.write(projectDir / "src" / "jvmTest" / "kotlin" / "MyTest.kt") {
+                    writeUtf8(
+                        """
+                        import kotlin.test.Test
+                        
+                        class MyTest {
+                            @Test
+                            fun my_test() {
+                                assert("asdf" == "asdf")
+                            }
+                        }
+                        """.trimIndent()
+                    )
+                }
+            }
+
+            Archetype.JAVAAPP -> {
+                FileSystem.SYSTEM.createDirectories(projectDir / "src" / "main" / "java")
+                FileSystem.SYSTEM.write(projectDir / "src" / "main" / "java" / "Main.java") {
+                    writeUtf8(
+                        """
+                        class Main {
+                            public static void main(String[] args) {
+                                System.out.println("hello, world");
+                            }
+                        }
+                        """.trimIndent()
+                    )
+                }
+
+                FileSystem.SYSTEM.createDirectories(projectDir / "src" / "test" / "java")
+                FileSystem.SYSTEM.write(projectDir / "src" / "test" / "java" / "MyTest.java") {
+                    writeUtf8(
+                        """
+                        import static org.junit.jupiter.api.Assertions.assertEquals;
+
+                        import org.junit.jupiter.api.Test;
+                        
+                        class MyTest {
+                        
+                            @Test
+                            void myTest() {
+                                assertEquals("asdf", "asdf");
+                            }
+                        
+                        }
+                        """.trimIndent()
+                    )
+                }
+            }
+
+            Archetype.ANDROIDAPP -> {
+                FileSystem.SYSTEM.write(projectDir / "gradle.properties") {
+                    writeUtf8(
+                        """
+                        org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8
+                        """.trimIndent()
+                    )
+                }
+
+                FileSystem.SYSTEM.createDirectories(projectDir / "src" / "main" / "kotlin" / "com" / "example" / "myapplication")
+                FileSystem.SYSTEM.write(projectDir / "src" / "main" / "kotlin" / "com" / "example" / "myapplication" / "MainActivity.kt") {
+                    writeUtf8(
+                        """
+                        package com.example.myapplication
+
+                        import android.os.Bundle
+                        import androidx.activity.ComponentActivity
+                        import androidx.activity.compose.setContent
+                        import androidx.compose.material3.Text
+                        import androidx.compose.runtime.Composable
+                        import androidx.compose.ui.tooling.preview.Preview
+                        
+                        class MainActivity : ComponentActivity() {
+                            override fun onCreate(savedInstanceState: Bundle?) {
+                                super.onCreate(savedInstanceState)
+                                setContent {
+                                    Greeting("World")
+                                }
+                            }
+                        }
+                        
+                        @Composable
+                        fun Greeting(name: String) {
+                            Text(text = "Hello ${"$"}name!")
+                        }
+                        
+                        @Preview(showBackground = true)
+                        @Composable
+                        fun DefaultPreview() {
+                            Greeting("Android")
+                        }
+                        """.trimIndent()
+                    )
+                }
+
+                FileSystem.SYSTEM.write(projectDir / "src" / "main" / "AndroidManifest.xml") {
+                    writeUtf8(
+                        """
+                        <?xml version="1.0" encoding="utf-8"?>
+                        <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+                            <application android:icon="@android:drawable/btn_star">
+                                <activity android:name=".MainActivity"
+                                          android:exported="true">
+                                    <intent-filter>
+                                        <action android:name="android.intent.action.MAIN" />
+                                        <category android:name="android.intent.category.LAUNCHER" />
+                                    </intent-filter>
+                                </activity>
+                            </application>
+
+                        </manifest>
+                        """.trimIndent()
+                    )
+                }
+
+                FileSystem.SYSTEM.createDirectories(projectDir / "src" / "androidTest" / "kotlin" / "com" / "example" / "myapplication")
+                FileSystem.SYSTEM.write(projectDir / "src" / "androidTest" / "kotlin" / "com" / "example" / "myapplication" / "GreetingTest.kt") {
+                    writeUtf8(
+                        """
+                        package com.example.myapplication
+
+                        import androidx.compose.ui.test.assertIsDisplayed
+                        import androidx.compose.ui.test.junit4.createComposeRule
+                        import androidx.compose.ui.test.onNodeWithText
+                        import org.junit.Rule
+                        import org.junit.Test
+
+                        class GreetingTest {
+
+                            @get:Rule
+                            val composeTestRule = createComposeRule()
+
+                            @Test
+                            fun myTest() {
+                                composeTestRule.setContent {
+                                    Greeting(name = "Test")
+                                }
+
+                                composeTestRule.onNodeWithText("Hello Test!").assertIsDisplayed()
+                            }
+
+                        }
+                        """.trimIndent()
+                    )
+                }
+            }
+        }
+
+        println()
+        println("Your project is ready!")
+        println()
+        println("First change to your new project directory:")
+        println("  cd $projectDir")
+        println()
+
+        // todo: same as help
+        println("Then run Gradle tasks:")
+        println("  graboo <task>")
+        println()
+        println("Or enter the Graboo Shell:")
+        println("  graboo")
+        exit(0)
+    }
+    else {
+        val storageDirEnv = when(Platform.osFamily) {
+            OsFamily.WINDOWS -> "LOCALAPPDATA"
+            else -> "HOME"
+        }
+
+        val home = getenv(storageDirEnv)?.toKString()
+        if (home == null) {
+            println("Could not read $storageDirEnv dir")
+            exit(1)
         }
         else {
-            val jdkDir = grabooJdk / currentVersion
-            println("Using JDK from $jdkDir")
-            jdkDir
-        }
+            val homePath = home.toPath()
 
-        // todo: check gradle version
-        // maybe use: https://services.gradle.org/versions/
+            if (!FileSystem.SYSTEM.exists(homePath)) {
+                println("Home dir ($home) does not exist")
+                exit(1)
+            }
 
-        if (args.firstOrNull() == "init") {
-            println("Init new project")
-        }
-        else if (args.isNotEmpty()) {
-            println("Launching Gradle")
-            runGradleWrapper(grabooDir, jdk, args)
-        }
-        else {
-            println("Entering Gradle Shell")
+            val grabooDir = homePath / ".graboo"
+
+            val grabooJdk = grabooDir / "jdk"
+            FileSystem.SYSTEM.createDirectories(grabooJdk, false)
+
+            val currentProps = grabooJdk / "current.properties"
+            val currentVersion = if (FileSystem.SYSTEM.exists(currentProps)) {
+                val contents = FileSystem.SYSTEM.read(currentProps) {
+                    readUtf8()
+                }
+                val maybeLine = contents.lines().find { it.startsWith("version=") }
+                maybeLine?.removePrefix("version=")
+            }
+            else {
+                null
+            }
+
+            // todo: update JDK to newer
+
+            val jdk = if ((currentVersion == null) || (!FileSystem.SYSTEM.exists(grabooJdk / currentVersion))) {
+                println("Downloading a JDK")
+
+                val (filename, bytes) = getLatestJdk()
+
+                // todo: check file hash
+
+                val version = filename.removeSuffix(".tar.gz").removeSuffix(".zip").substringAfter("hotspot_")
+
+                FileSystem.SYSTEM.delete(currentProps)
+                FileSystem.SYSTEM.write(currentProps, true) {
+                    writeUtf8("version=$version")
+                }
+
+                val jdkDir = grabooJdk / version
+
+                // todo: stream write instead of in-memory buffer whole file
+                saveToTempExtractAndDelete(filename, jdkDir, bytes)
+
+                jdkDir
+            }
+            else {
+                val jdkDir = grabooJdk / currentVersion
+                println("Using JDK from $jdkDir")
+                jdkDir
+            }
+
+            // todo: check gradle version
+            // maybe use: https://services.gradle.org/versions/
+
+            if (args.isNotEmpty()) {
+                println("Launching Gradle")
+                runGradleWrapper(grabooDir, jdk, args)
+            }
+            else {
+                println("Entering Gradle Shell")
+            }
         }
     }
 }
