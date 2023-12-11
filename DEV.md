@@ -1,6 +1,14 @@
 # Graboo Dev Info
 
+## Bootwrapper
+
+> Wraps Gradle Wrapper for a JVM entrypoint and externalized wrapper config
+> Written in Java to reduce UberJar size since it is embedded into the Bootstrapper
+
 ## Bootstrapper
+
+> sh and cmd scripts that download and launch the native bootstrapper
+> native bootstrapper handles `graboo new` and downloading a JDK and launching the bootwrapper
 
 Run locally:
 ```
@@ -16,6 +24,8 @@ Create native executable:
 ```
 
 ## Gradle Plugin
+
+> The Gradle Settings Plugin that transforms a concise project definition into the Gradle config
 
 ```
 ./gradlew :gradle-plugin:test --tests com.jamesward.gradleboot.GradlePluginTest.androidapp_hello_world_device_test

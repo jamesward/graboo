@@ -56,8 +56,12 @@ kotlin {
 
     sourceSets {
         commonMain {
+            kotlin {
+                srcDir(layout.buildDirectory.dir("generated"))
+            }
+
             dependencies {
-                implementation(universe.okio)
+                implementation(project(":templater"))
                 implementation(universe.ktor.client.core)
                 implementation(universe.ktor.client.content.negotiation)
                 implementation(universe.ktor.serialization.kotlinx.json)
@@ -108,7 +112,7 @@ tasks.register("addBootWrapper") {
         true
     }
 
-    outputs.file("src/nativeMain/kotlin/BootWrapper.kt")
+    outputs.file(layout.buildDirectory.file("generated/BootWrapper.kt"))
 
     doLast {
         val uberJar = project(":bootwrapper").file("build/libs/bootwrapper-uber.jar")
@@ -127,28 +131,8 @@ tasks.register("addBootWrapper") {
     }
 }
 
-tasks.register("addScripts") {
-    inputs.dir("scripts")
-    outputs.file("src/nativeMain/kotlin/BootScripts.kt")
-
-    doLast {
-        val encoder = Base64.getEncoder()
-        val shScript = "\"" + encoder.encodeToString(file("scripts/graboo").readBytes()) + "\""
-        val cmdScript = "\"" + encoder.encodeToString(file("scripts/graboo.cmd").readBytes()) + "\""
-
-        val contents = """
-            object BootScripts {
-                val shScript = $shScript
-                val cmdScript = $cmdScript
-            }
-        """.trimIndent()
-
-        outputs.files.singleFile.writeText(contents)
-    }
-}
-
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinNativeCompile>().configureEach {
-    dependsOn("addBootWrapper", "addScripts")
+    dependsOn("addBootWrapper")
 }
 
 /*
