@@ -6,23 +6,10 @@ import java.util.*
 plugins {
     `kotlin-dsl`
     alias(universe.plugins.gradle.plugin.publish)
+    alias(universe.plugins.kotlin.power.assert)
 }
 
 group = "com.jamesward"
-
-/*
-gitVersioning.apply {
-    refs {
-        tag("v(?<version>.*)") {
-            version = "\${ref.version}"
-        }
-    }
-
-    rev {
-        version = "\${commit}"
-    }
-}
- */
 
 kotlin {
     jvmToolchain(17)
@@ -62,6 +49,10 @@ tasks.withType<Jar> {
 val copyExamples = tasks.create<Copy>("copyExamples") {
     from(rootProject.layout.projectDirectory.dir("examples"))
     into(Files.createTempDirectory("gradle-plugin-test"))
+}
+
+configure<com.bnorm.power.PowerAssertGradleExtension> {
+    functions = listOf("org.junit.jupiter.api.Assertions.assertTrue")
 }
 
 tasks.named<Test>("test") {
