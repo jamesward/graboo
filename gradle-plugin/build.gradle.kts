@@ -6,11 +6,11 @@ import java.util.*
 plugins {
     `kotlin-dsl`
     alias(universe.plugins.gradle.plugin.publish)
-    alias(universe.plugins.qoomon.git.versioning)
 }
 
 group = "com.jamesward"
 
+/*
 gitVersioning.apply {
     refs {
         tag("v(?<version>.*)") {
@@ -22,6 +22,7 @@ gitVersioning.apply {
         version = "\${commit}"
     }
 }
+ */
 
 kotlin {
     jvmToolchain(17)

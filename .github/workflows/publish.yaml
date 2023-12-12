@@ -42,7 +42,7 @@ jobs:
         name: Get Version
         if: ${{ steps.secret-check.outputs.available == 'true' }}
         run: |
-          echo "version=$(./gradlew :gradle-plugin:version -q)" >> $GITHUB_OUTPUT
+          echo "version=$(./gradlew version -q)" >> $GITHUB_OUTPUT
 
       - name: Update Versions
         if: ${{ steps.secret-check.outputs.available == 'true' }}

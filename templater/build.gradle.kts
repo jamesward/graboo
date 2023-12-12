@@ -18,6 +18,7 @@ kotlin {
 
             kotlin {
                 srcDir(layout.buildDirectory.dir("generated/scripts"))
+                srcDir(layout.buildDirectory.dir("generated/other"))
             }
         }
     }
@@ -43,6 +44,20 @@ tasks.register("addScripts") {
     }
 }
 
+tasks.register("addOther") {
+    outputs.file(layout.buildDirectory.file("generated/other/GrabooProperties.kt"))
+
+    doLast {
+        val contents = """
+            object GrabooProperties {
+                val version = "${project.version}"
+            }
+        """.trimIndent()
+
+        outputs.files.singleFile.writeText(contents)
+    }
+}
+
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinNativeCompile>().configureEach {
-    dependsOn("addScripts")
+    dependsOn("addScripts", "addOther")
 }

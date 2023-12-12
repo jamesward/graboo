@@ -236,24 +236,10 @@ fun main(args: Array<String>): Unit = runBlocking {
 
         println("Creating project of type $archetype in $projectDir")
 
-        Templater.contents(archetype!!).forEach { (path, fileContents) ->
-            val filePath = projectDir / path
+        val contents = Templater.contents(archetype!!)
 
-            filePath.parent?.let {
-                FileSystem.SYSTEM.createDirectories(it)
-            }
-
-            FileSystem.SYSTEM.write(filePath) {
-                writeUtf8(fileContents.s)
-            }
-
-            if (fileContents.setExec && Platform.osFamily != OsFamily.WINDOWS) {
-                // todo: move to kotlin native
-                Command("chmod")
-                    .args("+x", filePath.toString())
-                    .spawn()
-                    .wait()
-            }
+        runBlocking {
+            Templater.write(contents, projectDir)
         }
 
         println()

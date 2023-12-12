@@ -1,6 +1,8 @@
 import okio.ByteString.Companion.decodeBase64
+import okio.FileSystem
 import okio.Path
 import okio.Path.Companion.toPath
+import kotlin.experimental.ExperimentalNativeApi
 
 // todo: Archetype options, ie Spring w/ Kotlin, Kotlin targets
 enum class Archetype {
@@ -30,6 +32,8 @@ enum class Archetype {
 }
 
 data class FileContents(val s: String, val setExec: Boolean = false)
+
+expect fun makeExecutable(path: Path)
 
 object Templater {
 
@@ -82,7 +86,7 @@ object Templater {
             }
 
             plugins {
-                id("com.jamesward.gradleboot") version "0.0.48"
+                id("com.jamesward.gradleboot") version "${GrabooProperties.version}"
             }
             """.trimIndent()
 
@@ -282,5 +286,24 @@ object Templater {
             "graboo".toPath() to FileContents(BootScripts.shScript.decodeBase64()!!.utf8(), true),
             "graboo.cmd".toPath() to FileContents(BootScripts.cmdScript.decodeBase64()!!.utf8()),
         ) + sourceFiles
+    }
+
+    @OptIn(ExperimentalNativeApi::class)
+    suspend fun write(files: Map<Path, FileContents>, dir: Path) = run {
+        files.forEach { (path, fileContents) ->
+            val filePath = dir / path
+
+            filePath.parent?.let {
+                FileSystem.SYSTEM.createDirectories(it)
+            }
+
+            FileSystem.SYSTEM.write(filePath) {
+                writeUtf8(fileContents.s)
+            }
+
+            if (fileContents.setExec) {
+                makeExecutable(filePath)
+            }
+        }
     }
 }
