@@ -107,15 +107,11 @@ tasks.withType<AbstractTestTask> {
 tasks.register("addBootWrapper") {
     dependsOn(":bootwrapper:uberJar")
 
-    // todo: make this run when uberJar is not up-to-date
-    onlyIf {
-        true
-    }
-
+    inputs.file(project(":bootwrapper").tasks.getByName("uberJar").outputs.files.singleFile)
     outputs.file(layout.buildDirectory.file("generated/BootWrapper.kt"))
 
     doLast {
-        val uberJar = project(":bootwrapper").file("build/libs/bootwrapper-uber.jar")
+        val uberJar = inputs.files.singleFile
         val encoder = Base64.getEncoder()
         val s = encoder.encodeToString(uberJar.readBytes()) //.chunked(10240).map { """"$it"""" }.joinToString("+ \n")
         val uberJarString = "\"" + s + "\""
