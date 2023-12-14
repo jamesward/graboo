@@ -19,31 +19,23 @@ jobs:
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2
 
-      - name: Create Container
-        env:
-          PROJECT: ${{ secrets.GCP_PROJECT || 'wtf' }}
-        run: |
-          ./gradlew :server:jibDockerBuild --image=gcr.io/$PROJECT/${{ github.event.repository.name }}:${{ github.sha }}
-
       - id: auth
         uses: 'google-github-actions/auth@v2'
         with:
           credentials_json: '${{ secrets.GCP_CREDENTIALS }}'
 
-# todo: auth success
-
       - name: 'Set up Cloud SDK'
         uses: 'google-github-actions/setup-gcloud@v2'
 
-      - name: Push Container
+      # todo: run on PR or move to test ?
+      - name: Create Container
         run: |
-          gcloud auth configure-docker
-          docker push gcr.io/${{ secrets.GCP_PROJECT }}/${{ github.event.repository.name }}:${{ github.sha }}
+          ./gradlew :server:jib --image=gcr.io/${{ steps.auth.outputs.project_id }}/${{ github.event.repository.name }}:${{ github.sha }}
 
       - name: Deploy Service
         uses: jamesward/easycloudrun/deploy@main
         env:
-          PROJECT_ID: ${{ secrets.GCP_PROJECT }}
+          PROJECT_ID: ${{ steps.auth.outputs.project_id }}
           COMMIT_SHA: ${{ github.sha }}
           IMAGE_NAME: ${{ github.event.repository.name }}
           IMAGE_VERSION: ${{ github.sha }}
