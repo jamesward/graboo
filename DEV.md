@@ -32,6 +32,32 @@ Create native executable:
 ```
 
 
+## Server
+
+Dev Mode, run each in a separate terminal
+```
+./gradlew :server:jvmRun
+```
+
+```
+./gradlew -t :server:compileKotlinJvm
+```
+
+Native Linux Run:
+```
+./gradlew :server:runDebugExecutableLinuxX64
+```
+
+Build a container:
+```
+./gradlew :server:jibDockerBuild --image=graboo-server
+```
+
+Run the container:
+```
+docker run -it -p8080:8080 graboo-server
+```
+
 ## Configurer
 
 ```

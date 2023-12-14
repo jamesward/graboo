@@ -9,14 +9,16 @@ kotlin {
     macosX64()
     macosArm64()
     mingwX64()
+    jvm()
 
     sourceSets {
-        nativeMain {
+        commonMain {
             dependencies {
                 api(universe.okio)
             }
 
             kotlin {
+                // todo: depend on task
                 srcDir(layout.buildDirectory.dir("generated/scripts"))
                 srcDir(layout.buildDirectory.dir("generated/other"))
             }
@@ -24,8 +26,9 @@ kotlin {
     }
 }
 
-tasks.register("addScripts") {
+val addScripts = tasks.register("addScripts") {
     inputs.dir("scripts")
+
     outputs.file(layout.buildDirectory.file("generated/scripts/BootScripts.kt"))
 
     doLast {
@@ -44,7 +47,7 @@ tasks.register("addScripts") {
     }
 }
 
-tasks.register("addOther") {
+val addOther = tasks.register("addOther") {
     outputs.file(layout.buildDirectory.file("generated/other/GrabooProperties.kt"))
 
     doLast {
@@ -58,6 +61,6 @@ tasks.register("addOther") {
     }
 }
 
-tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinNativeCompile>().configureEach {
-    dependsOn("addScripts", "addOther")
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask<*>>().configureEach {
+    dependsOn(addScripts, addOther)
 }

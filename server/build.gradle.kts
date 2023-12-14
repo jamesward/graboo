@@ -1,3 +1,7 @@
+import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
+import org.jetbrains.kotlin.gradle.InternalKotlinGradlePluginApi
+import org.jetbrains.kotlin.gradle.targets.jvm.tasks.KotlinJvmRun
+
 buildscript {
     repositories {
         mavenCentral()
@@ -23,6 +27,13 @@ kotlin {
         }
     }
 
+    jvm {
+        @OptIn(ExperimentalKotlinGradlePluginApi::class)
+        mainRun {
+            mainClass = "MainKt"
+        }
+    }
+
     sourceSets {
         commonMain {
             dependencies {
@@ -32,11 +43,20 @@ kotlin {
                 implementation(universe.arrow.kt.suspendapp)
                 implementation(universe.arrow.kt.suspendapp.ktor)
                 implementation(universe.benasher44.uuid)
-                // todo: to universe catalog
-                implementation("io.ktor:ktor-server-html-builder:2.3.7")
+                implementation(universe.ktor.server.html.builder)
+            }
+        }
+        jvmMain {
+            dependencies {
+                runtimeOnly(universe.slf4j.simple)
             }
         }
     }
+}
+
+@OptIn(InternalKotlinGradlePluginApi::class)
+tasks.withType<KotlinJvmRun> {
+    jvmArgs("-Dio.ktor.development=true")
 }
 
 tasks.register<Copy>("copyBinary") {
@@ -51,7 +71,8 @@ tasks.withType<com.google.cloud.tools.jib.gradle.JibTask> {
 
 jib {
     from {
-        image = "gcr.io/distroless/base"
+//        image = "gcr.io/distroless/base"
+        image = "debian:stable-slim"
     }
     pluginExtensions {
         pluginExtension {
@@ -61,6 +82,15 @@ jib {
     }
     container {
         mainClass = "MainKt"
+    }
+    extraDirectories {
+        paths {
+            path {
+                setFrom(file("jib-files"))
+                into = "/usr/bin"
+            }
+        }
+        permissions.put("/usr/bin/zip", "755")
     }
 }
 

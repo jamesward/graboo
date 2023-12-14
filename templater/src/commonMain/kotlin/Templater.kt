@@ -35,6 +35,8 @@ data class FileContents(val s: String, val setExec: Boolean = false)
 
 expect fun makeExecutable(path: Path)
 
+expect suspend fun writeFilesToDir(files: Map<Path, FileContents>, dir: Path)
+
 object Templater {
 
     fun contents(archetype: Archetype): Map<Path, FileContents> = run {
@@ -288,22 +290,7 @@ object Templater {
         ) + sourceFiles
     }
 
-    @OptIn(ExperimentalNativeApi::class)
     suspend fun write(files: Map<Path, FileContents>, dir: Path) = run {
-        files.forEach { (path, fileContents) ->
-            val filePath = dir / path
-
-            filePath.parent?.let {
-                FileSystem.SYSTEM.createDirectories(it)
-            }
-
-            FileSystem.SYSTEM.write(filePath) {
-                writeUtf8(fileContents.s)
-            }
-
-            if (fileContents.setExec) {
-                makeExecutable(filePath)
-            }
-        }
+        writeFilesToDir(files, dir)
     }
 }
