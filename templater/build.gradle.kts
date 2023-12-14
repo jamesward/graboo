@@ -1,4 +1,4 @@
-import java.util.Base64
+import java.util.*
 
 plugins {
     alias(universe.plugins.kotlin.multiplatform)

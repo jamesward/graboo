@@ -1,36 +1,18 @@
-import com.kgit2.process.Command
 import io.ktor.http.*
 import io.ktor.http.content.*
 import io.ktor.server.application.*
 import io.ktor.server.response.*
 import io.ktor.utils.io.*
-import kotlinx.cinterop.CValue
-import kotlinx.cinterop.CValuesRef
 import kotlinx.cinterop.ExperimentalForeignApi
-import kotlinx.cinterop.IntVar
-import kotlinx.cinterop.allocArrayOf
-import kotlinx.cinterop.cValue
-import kotlinx.cinterop.cstr
-import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.refTo
 import kotlinx.cinterop.toKString
 import okio.FileSystem
 import okio.Path
-import platform.posix.chdir
-import platform.posix.execlp
-import platform.posix.fork
 import okio.buffer
 import okio.use
-import platform.posix.__WAIT_STATUS
-import platform.posix.execvp
-import platform.posix.exit
 import platform.posix.fgets
 import platform.posix.pclose
 import platform.posix.popen
-import platform.posix.pthread_join
-import platform.posix.wait
-import platform.posix.wait4
-import platform.posix.waitpid
 
 // from: https://gist.github.com/Stexxe/4867bbd9b44339f9f9adc39e166894ca
 class LocalFileContent(private val path: Path, private val name: String) : OutgoingContent.WriteChannelContent() {

@@ -1,4 +1,16 @@
-import kotlinx.html.*
+import kotlinx.html.FormMethod
+import kotlinx.html.HTML
+import kotlinx.html.body
+import kotlinx.html.fieldSet
+import kotlinx.html.form
+import kotlinx.html.h1
+import kotlinx.html.head
+import kotlinx.html.label
+import kotlinx.html.legend
+import kotlinx.html.radioInput
+import kotlinx.html.submitInput
+import kotlinx.html.textInput
+import kotlinx.html.title
 
 object UI {
     val index: HTML.() -> Unit = {
