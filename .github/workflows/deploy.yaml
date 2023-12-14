@@ -25,33 +25,23 @@ jobs:
         run: |
           ./gradlew :server:jibDockerBuild --image=gcr.io/$PROJECT/${{ github.event.repository.name }}:${{ github.sha }}
 
-      - id: secret-check
-        name: Check for Secret Availability
-        run: |
-          if [ "${{ secrets.GCP_PROJECT }}" != '' ] && [ "${{ secrets.GCP_CREDENTIALS }}" != '' ]; then
-            echo "available=true" >> $GITHUB_OUTPUT;
-          else
-            echo "available=false" >> $GITHUB_OUTPUT;
-          fi
-
-      - uses: 'google-github-actions/auth@v2'
-        if: ${{ steps.secret-check.outputs.available == 'true' }}
+      - id: auth
+        uses: 'google-github-actions/auth@v2'
         with:
           credentials_json: '${{ secrets.GCP_CREDENTIALS }}'
 
+# todo: auth success
+
       - name: 'Set up Cloud SDK'
-        if: ${{ steps.secret-check.outputs.available == 'true' }}
         uses: 'google-github-actions/setup-gcloud@v2'
 
       - name: Push Container
-        if: ${{ steps.secret-check.outputs.available == 'true' }}
         run: |
           gcloud auth configure-docker
           docker push gcr.io/${{ secrets.GCP_PROJECT }}/${{ github.event.repository.name }}:${{ github.sha }}
 
       - name: Deploy Service
         uses: jamesward/easycloudrun/deploy@main
-        if: ${{ steps.secret-check.outputs.available == 'true' }}
         env:
           PROJECT_ID: ${{ secrets.GCP_PROJECT }}
           COMMIT_SHA: ${{ github.sha }}
