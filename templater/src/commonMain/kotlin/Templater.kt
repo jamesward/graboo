@@ -117,7 +117,7 @@ object Templater {
         val sourceFiles = when (archetype) {
             Archetype.SPRINGAPP ->
                 mapOf(
-                    "src/main/java/com/example/MyApplication.java".toPath() to FileContents(
+                    "src/main/java/com/example/MyApplication.java" to FileContents(
                         """
                         package com.example;
         
@@ -133,7 +133,7 @@ object Templater {
                         """.trimIndent()
                     ),
 
-                    "src/test/java/com/example/MyApplicationTests.java".toPath() to FileContents(
+                    "src/test/java/com/example/MyApplicationTests.java" to FileContents(
                         """
                         package com.example;
     
@@ -156,14 +156,14 @@ object Templater {
 
             Archetype.KOTLINAPP ->
                 mapOf(
-                    "src/jvmMain/kotlin/Main.kt".toPath() to FileContents(
+                    "src/jvmMain/kotlin/Main.kt" to FileContents(
                         """
                         fun main() {
                             println("hello, world")
                         }
                         """.trimIndent()
                     ),
-                    "src/jvmTest/kotlin/MyTest.kt".toPath() to FileContents(
+                    "src/jvmTest/kotlin/MyTest.kt" to FileContents(
                         """
                         import kotlin.test.Test
     
@@ -179,7 +179,7 @@ object Templater {
 
             Archetype.JAVAAPP ->
                 mapOf(
-                    "src/main/java/Main.java".toPath() to FileContents(
+                    "src/main/java/Main.java" to FileContents(
                         """
                         class Main {
                             public static void main(String[] args) {
@@ -188,7 +188,7 @@ object Templater {
                         }
                         """.trimIndent()
                     ),
-                    "src/test/java/MyTest.java".toPath() to FileContents(
+                    "src/test/java/MyTest.java" to FileContents(
                         """
                         import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -208,13 +208,13 @@ object Templater {
 
             Archetype.ANDROIDAPP ->
                 mapOf(
-                    "gradle.properties".toPath() to FileContents(
+                    "gradle.properties" to FileContents(
                         """
                         org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8
                         """.trimIndent()
                     ),
 
-                    "src/main/kotlin/com/example/myapplication/MainActivity.kt".toPath() to FileContents(
+                    "src/main/kotlin/com/example/myapplication/MainActivity.kt" to FileContents(
                         """
                         package com.example.myapplication
 
@@ -247,7 +247,7 @@ object Templater {
                         """.trimIndent()
                     ),
 
-                    "src/main/AndroidManifest.xml".toPath() to FileContents(
+                    "src/main/AndroidManifest.xml" to FileContents(
                         """
                         <?xml version="1.0" encoding="utf-8"?>
                         <manifest xmlns:android="http://schemas.android.com/apk/res/android">
@@ -266,7 +266,7 @@ object Templater {
                         """.trimIndent()
                     ),
 
-                    "src/androidTest/kotlin/com/example/myapplication/GreetingTest.kt".toPath() to FileContents(
+                    "src/androidTest/kotlin/com/example/myapplication/GreetingTest.kt" to FileContents(
                         """
                         package com.example.myapplication
 
@@ -296,13 +296,16 @@ object Templater {
                 )
         }
 
-        mapOf(
-            ".gitignore".toPath() to FileContents(gitignore),
-            "build.gradle.kts".toPath() to FileContents(buildGradleKts),
-            "settings.gradle.kts".toPath() to FileContents(settingsGradleKts),
-            "graboo".toPath() to FileContents(BootScripts.shScript.decodeBase64()!!.utf8(), true),
-            "graboo.cmd".toPath() to FileContents(BootScripts.cmdScript.decodeBase64()!!.utf8()),
+        val nonnormalized = mapOf(
+            ".gitignore" to FileContents(gitignore),
+            "build.gradle.kts" to FileContents(buildGradleKts),
+            "settings.gradle.kts" to FileContents(settingsGradleKts),
+            "graboo" to FileContents(BootScripts.shScript.decodeBase64()!!.utf8(), true),
+            "graboo.cmd" to FileContents(BootScripts.cmdScript.decodeBase64()!!.utf8()),
         ) + sourceFiles
+
+        // todo: maybe a better way to get the paths to be platform-specific
+        nonnormalized.mapKeys { it.key.replace('/', Path.DIRECTORY_SEPARATOR.toCharArray().first()).toPath() }
     }
 
     suspend fun write(files: Map<Path, FileContents>, dir: Path) = run {
