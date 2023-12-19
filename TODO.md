@@ -12,9 +12,6 @@
 - Maybe some way for the publish-executables job to get the latest from git since it is updated in publish-plugin
 
 ## DX
-- Project initialization
-  - `graboo new`
-  - graboo.dev
 - Gradle Usage
   - Auto-main plugin
     - Discover main
@@ -49,6 +46,8 @@
 - Multi-module
   - Automatic submodules `*/build.gradle.kts`
   - No top-level `build.gradle.kts` ?
+- gradle-plugin
+  - Fix IntelliJ gradle settings if import before running graboo
 
 ## Model
 - Plugin internal deps externalized versions

@@ -29,11 +29,14 @@ kotlin {
         }
     }
 
-    jvm {
-        jvmToolchain(17)
-        @OptIn(ExperimentalKotlinGradlePluginApi::class)
-        mainRun {
-            mainClass = "MainKt"
+    // don't setup this platform unless on Linux
+    if (org.gradle.internal.os.OperatingSystem.current().isLinux) {
+        jvm {
+            jvmToolchain(17)
+            @OptIn(ExperimentalKotlinGradlePluginApi::class)
+            mainRun {
+                mainClass = "MainKt"
+            }
         }
     }
 
