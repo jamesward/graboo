@@ -11,7 +11,9 @@ kotlin {
     macosX64()
     macosArm64()
     mingwX64()
-    jvm()
+    jvm {
+        jvmToolchain(17)
+    }
 
     @OptIn(org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi::class)
     applyHierarchyTemplate {

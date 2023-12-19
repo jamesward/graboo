@@ -30,7 +30,7 @@ kotlin {
     }
 
     jvm {
-        jvmToolchain(11)
+        jvmToolchain(17)
         @OptIn(ExperimentalKotlinGradlePluginApi::class)
         mainRun {
             mainClass = "MainKt"
