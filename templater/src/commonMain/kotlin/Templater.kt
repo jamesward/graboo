@@ -1,4 +1,5 @@
 import okio.ByteString.Companion.decodeBase64
+import okio.FileSystem
 import okio.Path
 import okio.Path.Companion.toPath
 
@@ -33,7 +34,23 @@ data class FileContents(val s: String, val setExec: Boolean = false)
 
 expect fun makeExecutable(path: Path)
 
-expect suspend fun writeFilesToDir(files: Map<Path, FileContents>, dir: Path)
+suspend fun writeFilesToDir(files: Map<Path, FileContents>, dir: Path) {
+    files.forEach { (path, fileContents) ->
+        val filePath = dir / path
+
+        filePath.parent?.let {
+            FileSystem.SYSTEM.createDirectories(it)
+        }
+
+        FileSystem.SYSTEM.write(filePath) {
+            writeUtf8(fileContents.s)
+        }
+
+        if (fileContents.setExec) {
+            makeExecutable(filePath)
+        }
+    }
+}
 
 object Templater {
 
@@ -291,4 +308,5 @@ object Templater {
     suspend fun write(files: Map<Path, FileContents>, dir: Path) = run {
         writeFilesToDir(files, dir)
     }
+
 }

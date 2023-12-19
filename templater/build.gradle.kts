@@ -1,7 +1,9 @@
+import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSetTree
 import java.util.*
 
 plugins {
     alias(universe.plugins.kotlin.multiplatform)
+    alias(universe.plugins.kotlin.power.assert)
 }
 
 kotlin {
@@ -10,6 +12,28 @@ kotlin {
     macosArm64()
     mingwX64()
     jvm()
+
+    @OptIn(org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi::class)
+    applyHierarchyTemplate {
+        withSourceSetTree(KotlinSourceSetTree.main, KotlinSourceSetTree.test)
+
+        common {
+            withCompilations { true }
+
+            group("posixAndJvm") {
+                group("posix") {
+                    withLinux()
+                    withMacos()
+                }
+                group("jvm") {
+                    withJvm()
+                }
+            }
+            group("windows") {
+                withMingw()
+            }
+        }
+    }
 
     sourceSets {
         commonMain {
@@ -21,6 +45,13 @@ kotlin {
                 // todo: depend on task
                 srcDir(layout.buildDirectory.dir("generated/scripts"))
                 srcDir(layout.buildDirectory.dir("generated/other"))
+            }
+        }
+        commonTest {
+            dependencies {
+                implementation(universe.kotlin.test)
+                implementation(universe.benasher44.uuid)
+                implementation(universe.kotlinx.coroutines.core)
             }
         }
     }
@@ -63,4 +94,22 @@ val addOther = tasks.register("addOther") {
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask<*>>().configureEach {
     dependsOn(addScripts, addOther)
+}
+
+tasks.withType<AbstractTestTask> {
+    testLogging {
+        showStandardStreams = true
+        showExceptions = true
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+        events(
+            org.gradle.api.tasks.testing.logging.TestLogEvent.STARTED,
+            org.gradle.api.tasks.testing.logging.TestLogEvent.PASSED,
+            org.gradle.api.tasks.testing.logging.TestLogEvent.SKIPPED,
+            org.gradle.api.tasks.testing.logging.TestLogEvent.FAILED,
+        )
+    }
+}
+
+configure<com.bnorm.power.PowerAssertGradleExtension> {
+    functions = listOf("kotlin.assert", "kotlin.test.assertTrue")
 }

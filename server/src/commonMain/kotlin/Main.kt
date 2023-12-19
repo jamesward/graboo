@@ -1,3 +1,5 @@
+import com.benasher44.uuid.uuid4
+import com.kgit2.process.Command
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.cio.*
@@ -7,11 +9,30 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.util.*
+import io.ktor.util.*
 import okio.FileSystem
 import okio.Path
 
 
-expect suspend fun createAndServe(dir: Path, zip: Path, archetype: Archetype, name: String, call: ApplicationCall)
+suspend fun createZip(dir: Path, archetype: Archetype, name: String): Path = run {
+    val templateDir = dir / name
+    val zipFile = dir / "$name.zip"
+
+    val contents = Templater.contents(archetype)
+    Templater.write(contents, templateDir)
+
+    Command("zip")
+        .args("-r", zipFile.toString(), name)
+        .cwd(dir.toString())
+        .spawn()
+        .wait()
+
+    FileSystem.SYSTEM.deleteRecursively(templateDir)
+
+    zipFile
+}
+
+expect suspend fun ApplicationCall.respondPath(path: Path)
 
 fun main() {
 //fun main() = SuspendApp {
@@ -30,10 +51,9 @@ fun main() {
                         call.respond(HttpStatusCode.NotFound, "The specified project type is not valid")
                     }
                     else {
-                        val tmpDir = FileSystem.SYSTEM_TEMPORARY_DIRECTORY / archetype.toString()
-                        val tmpZip = FileSystem.SYSTEM_TEMPORARY_DIRECTORY / ("$archetype.zip")
-
-                        createAndServe(tmpDir, tmpZip, archetype, name, call)
+                        val tmpDir = FileSystem.SYSTEM_TEMPORARY_DIRECTORY / uuid4().toString()
+                        val zipFile = createZip(tmpDir, archetype, name)
+                        call.respondPath(zipFile)
                     }
                 }
                 post("/download") {
@@ -43,6 +63,17 @@ fun main() {
                         call.respondRedirect("/$archetype/$name.zip")
                     } ?: call.respond(HttpStatusCode.BadRequest)
                 }
+                /*
+                get("/graboo-server-js-wasm-js.wasm") {
+                    call.respondBytes(
+                        contentType = ContentType.parse("application/wasm"),
+                        bytes = StaticFiles.wasm.decodeBase64Bytes()
+                    )
+                }
+                get ("/graboo.js") {
+                    call.respondText(StaticFiles.js.decodeBase64String(), contentType = ContentType.Text.JavaScript)
+                }
+                 */
             }
         }
         //awaitCancellation()

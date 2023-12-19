@@ -1,5 +1,6 @@
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.InternalKotlinGradlePluginApi
+import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSetTree
 import org.jetbrains.kotlin.gradle.targets.jvm.tasks.KotlinJvmRun
 
 buildscript {
@@ -14,6 +15,7 @@ buildscript {
 plugins {
     alias(universe.plugins.kotlin.multiplatform)
     alias(universe.plugins.jib)
+    alias(universe.plugins.kotlin.power.assert)
 }
 
 kotlin {
@@ -28,9 +30,24 @@ kotlin {
     }
 
     jvm {
+        jvmToolchain(11)
         @OptIn(ExperimentalKotlinGradlePluginApi::class)
         mainRun {
             mainClass = "MainKt"
+        }
+    }
+
+    @OptIn(ExperimentalKotlinGradlePluginApi::class)
+    applyHierarchyTemplate {
+        withSourceSetTree(KotlinSourceSetTree.main, KotlinSourceSetTree.test)
+
+        common {
+            withCompilations { true }
+
+            group("linuxAndJvm") {
+                withLinux()
+                withJvm()
+            }
         }
     }
 
@@ -44,8 +61,16 @@ kotlin {
                 implementation(universe.arrow.kt.suspendapp.ktor)
                 implementation(universe.benasher44.uuid)
                 implementation(universe.ktor.server.html.builder)
+                implementation(universe.kgit2.kommand)
             }
         }
+
+        commonTest {
+            dependencies {
+                implementation(universe.kotlin.test)
+            }
+        }
+
         jvmMain {
             dependencies {
                 runtimeOnly(universe.slf4j.simple)
@@ -53,6 +78,78 @@ kotlin {
         }
     }
 }
+
+tasks.withType<AbstractTestTask> {
+    testLogging {
+        showStandardStreams = true
+        showExceptions = true
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+        events(
+            org.gradle.api.tasks.testing.logging.TestLogEvent.STARTED,
+            org.gradle.api.tasks.testing.logging.TestLogEvent.PASSED,
+            org.gradle.api.tasks.testing.logging.TestLogEvent.SKIPPED,
+            org.gradle.api.tasks.testing.logging.TestLogEvent.FAILED,
+        )
+    }
+}
+
+configure<com.bnorm.power.PowerAssertGradleExtension> {
+    functions = listOf("kotlin.assert", "kotlin.test.assertTrue")
+}
+
+/*
+tasks.register("addJsDev") {
+    inputs.files(project(":server-js").tasks.getByName("wasmJsBrowserDevelopmentExecutableDistribution").outputs.files.singleFile)
+    outputs.file(layout.buildDirectory.file("generated/StaticFiles.kt"))
+
+    doLast {
+        val wasm = File(inputs.files.singleFile, "graboo-server-js-wasm-js.wasm")
+        val js = File(inputs.files.singleFile, "server-js.js")
+        val encoder = Base64.getEncoder()
+        val wasmEncoded = encoder.encodeToString(wasm.readBytes())
+        val jsEncoded = encoder.encodeToString(js.readBytes())
+
+        val contents = """
+            object StaticFiles {
+                val wasm = "$wasmEncoded"
+                val js = "$jsEncoded"
+            }
+        """.trimIndent()
+
+        outputs.files.singleFile.writeText(contents)
+    }
+}
+
+tasks.withType<KotlinCompile>().configureEach {
+    dependsOn("addJsDev")
+}
+
+tasks.register("addJsProd") {
+    inputs.files(project(":server-js").tasks.getByName("wasmJsBrowserDistribution").outputs.files.singleFile)
+    outputs.file(layout.buildDirectory.file("generated/StaticFiles.kt"))
+
+    doLast {
+        val wasm = File(inputs.files.singleFile, "graboo-server-js-wasm-js.wasm")
+        val js = File(inputs.files.singleFile, "server-js.js")
+        val encoder = Base64.getEncoder()
+        val wasmEncoded = encoder.encodeToString(wasm.readBytes())
+        val jsEncoded = encoder.encodeToString(js.readBytes())
+
+        val contents = """
+            object StaticFiles {
+                val wasm = "$wasmEncoded"
+                val js = "$jsEncoded"
+            }
+        """.trimIndent()
+
+        outputs.files.singleFile.writeText(contents)
+    }
+}
+
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinNativeCompile>().configureEach {
+    dependsOn("addJsProd")
+}
+ */
 
 @OptIn(InternalKotlinGradlePluginApi::class)
 tasks.withType<KotlinJvmRun> {

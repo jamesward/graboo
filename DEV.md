@@ -43,6 +43,12 @@ Dev Mode, run each in a separate terminal
 ./gradlew -t :server:compileKotlinJvm
 ```
 
+<!--
+```
+./gradlew -t :server-js:wasmJsBrowserDevelopmentExecutableDistribution
+```
+-->
+
 Native Linux Run:
 ```
 ./gradlew :server:runDebugExecutableLinuxX64
@@ -58,6 +64,7 @@ Run the container:
 docker run -it -p8080:8080 graboo-server
 ```
 
+<!--
 ## Configurer
 
 ```
@@ -73,3 +80,4 @@ Some other dir
 - Update `README.md` and examples/*/settings.gradle.kts
 - `git tag v0.0.x`
 - `git push --atomic origin main v0.0.x`
+-->

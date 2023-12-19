@@ -1,6 +1,7 @@
 import kotlinx.html.FormMethod
 import kotlinx.html.HTML
 import kotlinx.html.body
+import kotlinx.html.div
 import kotlinx.html.fieldSet
 import kotlinx.html.form
 import kotlinx.html.h1
@@ -18,6 +19,7 @@ object UI {
             title {
                 +"Graboo"
             }
+            //script(src = "/graboo.js") { }
         }
         body {
             h1 {
@@ -53,6 +55,10 @@ object UI {
                 submitInput {
                     value = "Download Project Zip"
                 }
+            }
+            div {
+                +"After downloading the zip, extract the project, open it in your IDE, and run graboo"
+
             }
         }
     }
