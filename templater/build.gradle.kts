@@ -11,8 +11,11 @@ kotlin {
     macosX64()
     macosArm64()
     mingwX64()
-    jvm {
-        jvmToolchain(17)
+
+    if (!org.gradle.internal.os.OperatingSystem.current().isWindows) {
+        jvm {
+            jvmToolchain(17)
+        }
     }
 
     @OptIn(org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi::class)
