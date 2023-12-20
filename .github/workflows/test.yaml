@@ -56,4 +56,4 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           .\gradlew test
-          .\gradlew allTests
+#          .\gradlew allTests

@@ -141,12 +141,12 @@ jobs:
       - name: update graboo
         if: matrix.os == 'ubuntu'
         run: |
-          for f in examples/*/*; do cp -p bootstrapper/scripts/graboo $f; done
+          for f in examples/*/*; do cp -p templater/scripts/graboo $f; done
 
       - name: update graboo.cmd
         if: matrix.os == 'windows'
         run: |
-          dir "examples/*/*" | foreach-object { copy-item -path bootstrapper/scripts/graboo.cmd -destination $_ }
+          dir "examples/*/*" | foreach-object { copy-item -path templater/scripts/graboo.cmd -destination $_ }
 
       - name: test graboo on ${{ matrix.target }}
         if: matrix.target == 'ubuntu-x64' || matrix.target == 'macos-x64'
