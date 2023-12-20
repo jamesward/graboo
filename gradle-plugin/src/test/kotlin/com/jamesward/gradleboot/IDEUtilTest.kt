@@ -184,13 +184,9 @@ class IDEUtilTest {
         intellijAppDir.mkdirs()
         assertTrue(location(Archetype.ANDROIDAPP, appDir, cachesDir) == intellijAppDir)
 
-        val androidStudioAppDir = File(appDir, "Google\\Android Studio 2023.3")
+        val androidStudioAppDir = File(appDir, "Android\\Android Studio")
         androidStudioAppDir.mkdirs()
         assertTrue(location(Archetype.ANDROIDAPP, appDir, cachesDir) == androidStudioAppDir)
-
-        val androidStudioPreviewAppDir = File(appDir, "Google\\Android Studio Preview 2023.3")
-        androidStudioPreviewAppDir.mkdirs()
-        assertTrue(location(Archetype.ANDROIDAPP, appDir, cachesDir) == androidStudioPreviewAppDir)
     }
 
 }

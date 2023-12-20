@@ -75,9 +75,8 @@ Some other dir
 ```
 <project_dir>/configurer/build/install/configurer/bin/configurer
 ```
+-->
 
 ## Release
-- Update `README.md` and examples/*/settings.gradle.kts
 - `git tag v0.0.x`
 - `git push --atomic origin main v0.0.x`
--->
