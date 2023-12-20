@@ -1,25 +1,41 @@
 #!/bin/sh
 
+args=$@
+
 case "`uname`" in
-  MINGW*) exec_name=graboo-windown-x64.exe;;
+  MINGW*)
+    exec_name=graboo-windown-x64.exe;;
   Darwin*)
+    # detect if we were double-clicked
+    [ "$HOME" = "$PWD" ] && [ "$#" -eq 0 ] && {
+      echo "Detected MAC OSX launched script...."
+      echo "Swapping to UI"
+      args="ide"
+    }
+
     case "`uname -m`" in
-      x86_64) exec_name=graboo-macos-x64;;
-      arm64) exec_name=graboo-macos-arm64;;
+      x86_64)
+        exec_name=graboo-macos-x64;;
+      arm64)
+        exec_name=graboo-macos-arm64;;
       *)
         echo "Architecture not supported"
         exit 1
         ;;
     esac
     ;;
-  Linux*) exec_name=graboo-linux-x64;;
+  Linux*)
+    # detect if we were double-clicked in Linux
+    [ "$(readlink -f /proc/$(ps -o ppid:1= -p $$)/exe)" != "$(readlink -f "$SHELL")" ] && [ "$#" -eq 0 ] && {
+      args="ide"
+    }
+
+    exec_name=graboo-linux-x64;;
   *)
     echo "Platform not supported"
     exit 1
     ;;
 esac
-
-# todo auto-update
 
 mkdir -p $HOME/.graboo
 
@@ -38,4 +54,4 @@ if [ ! -e "$executable" ] ; then
   chmod +x $executable
 fi
 
-exec "$executable" "$@"
+exec "$executable" "$args"
