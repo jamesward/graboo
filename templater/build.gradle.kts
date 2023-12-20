@@ -27,8 +27,12 @@ kotlin {
 
             group("posixAndJvm") {
                 group("posix") {
-                    withLinux()
-                    withMacos()
+                    group("linux") {
+                        withLinux()
+                    }
+                    group("macos") {
+                        withMacos()
+                    }
                 }
                 group("jvm") {
                     withJvm()
@@ -43,6 +47,7 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
+                api(project(":core"))
                 api(universe.okio)
             }
 

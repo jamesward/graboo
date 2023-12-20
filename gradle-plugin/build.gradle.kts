@@ -16,6 +16,7 @@ kotlin {
 }
 
 dependencies {
+    compileOnly(project(":core"))
     implementation(universe.kotlin.gradle.plugin)
     implementation(universe.kotlin.allopen)
 
@@ -34,6 +35,7 @@ dependencies {
 
     implementation(universe.android.gradle)
 
+    testImplementation(project(":core"))
     testImplementation(gradleTestKit())
     testImplementation(universe.junit.jupiter)
     testRuntimeOnly(universe.junit.platform.launcher)
@@ -44,6 +46,10 @@ tasks.withType<Jar> {
     from(file(universe.javaClass.superclass.protectionDomain.codeSource.location))
 }
  */
+tasks.named<Jar>("jar") {
+    // include the core dep contents since I'm not sure how to publish the dep
+    from(zipTree(project(":core").tasks["jvmJar"].outputs.files.singleFile))
+}
 
 // todo: cleanup tmp or move to test
 val copyExamples = tasks.create<Copy>("copyExamples") {

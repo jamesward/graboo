@@ -236,4 +236,17 @@ class GradlePluginTest {
         assertTrue(line?.contains("SUCCESS") ?: false)
     }
 
+    /*
+    @Test
+    fun ide_task() {
+        val jvmOnly = File(examplesDir, "javaapp/hello-world")
+        val result = GradleRunner.create()
+            .withProjectDir(jvmOnly)
+            .withArguments("ide")
+            .build()
+
+        println(result.output)
+    }
+     */
+
 }

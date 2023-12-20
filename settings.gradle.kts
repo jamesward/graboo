@@ -1,6 +1,6 @@
 rootProject.name = "graboo"
 
-include("templater", "bootstrapper", "gradle-plugin", "bootwrapper", "server") //, "server-js")
+include("core", "templater", "bootstrapper", "gradle-plugin", "bootwrapper", "server") //, "server-js")
 
 dependencyResolutionManagement {
     @Suppress("UnstableApiUsage")

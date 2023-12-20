@@ -1,5 +1,6 @@
 package com.jamesward.gradleboot
 
+import Archetype
 import com.android.build.api.dsl.ApplicationExtension
 import com.android.build.gradle.AppPlugin
 import com.android.build.gradle.internal.dependency.AndroidXDependencyCheck
@@ -163,6 +164,9 @@ class GradleSettingsPlugin : Plugin<Settings> {
     }
 
     class Boot(private val project: Project) {
+        // todo: to enum
+        var archetype: String? = null
+
         fun springApp(configure: SpringApp.() -> Unit) {
             val springApp = SpringApp()
             springApp.configure()
@@ -366,6 +370,8 @@ class GradleSettingsPlugin : Plugin<Settings> {
         }
 
         fun javaApp(configure: JavaApp.() -> Unit) {
+            archetype = "javaApp"
+
             val javaApp = JavaApp()
             javaApp.configure()
 
@@ -510,7 +516,22 @@ class GradleSettingsPlugin : Plugin<Settings> {
 
     override fun apply(settings: Settings) {
         settings.gradle.beforeProject {
-            extensions.add("boot", Boot(this))
+            val boot = Boot(this)
+            extensions.add("boot", boot)
+
+            tasks.create("ide") {
+                doLast {
+                    IDEUtil.location(boot.archetype?.let { Archetype(it) })?.let { ideHome ->
+                        IDEUtil.exe(ideHome)?.let { exe ->
+                            println("Opening this project using $ideHome")
+                            ProcessBuilder(exe.toString(), project.projectDir.toString())
+                                .redirectOutput(ProcessBuilder.Redirect.INHERIT)
+                                .redirectError(ProcessBuilder.Redirect.INHERIT)
+                                .start()
+                        }
+                    } ?: throw Exception("Could not find a valid IntelliJ or Android Studio")
+                }
+            }
         }
 
         settings.gradle.settingsEvaluated {
@@ -551,4 +572,3 @@ class GradleSettingsPlugin : Plugin<Settings> {
         }
     }
 }
-

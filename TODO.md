@@ -48,6 +48,9 @@
   - No top-level `build.gradle.kts` ?
 - gradle-plugin
   - Fix IntelliJ gradle settings if import before running graboo
+- double-click graboo to open in IDE (detect location and archetype to determine which one)?
+  - `.cache/JetBrains/IntelliJIdea2023.3/.home`
+  - https://www.jetbrains.com/help/idea/directories-used-by-the-ide-to-store-settings-caches-plugins-and-logs.html#config-directory
 
 ## Model
 - Plugin internal deps externalized versions

@@ -5,6 +5,7 @@
 A collection of experiments to reduce friction with Gradle:
 
 - [x] JVM-less / Native Gradle Wrapper that is SCM-friendly
+- [ ] Easy IDE Launcher
 - [x] Project initializer: CLI `graboo new` and Web [graboo.dev](https://graboo.dev)
 - [x] Out-of-the box typed dependency references via [Universe Version Catalog](https://github.com/jamesward/kotlin-universe-catalog)
 - [x] Declarative-like, Developer-oriented Build Definitions (the common things shouldn't need to be specified)

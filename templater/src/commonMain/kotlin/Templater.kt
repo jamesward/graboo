@@ -3,32 +3,7 @@ import okio.FileSystem
 import okio.Path
 import okio.Path.Companion.toPath
 
-// todo: Archetype options, ie Spring w/ Kotlin, Kotlin targets
-enum class Archetype {
-    SPRINGAPP,
-    KOTLINAPP,
-    JAVAAPP,
-    ANDROIDAPP;
 
-    override fun toString(): String =
-        when(this) {
-            SPRINGAPP -> "springApp"
-            KOTLINAPP -> "kotlinApp"
-            JAVAAPP -> "javaApp"
-            ANDROIDAPP -> "androidApp"
-        }
-
-    companion object {
-        operator fun invoke(s: String): Archetype? =
-            when(s.lowercase()) {
-                "springapp" -> SPRINGAPP
-                "kotlinapp" -> KOTLINAPP
-                "javaapp" -> JAVAAPP
-                "androidapp" -> ANDROIDAPP
-                else -> null
-            }
-    }
-}
 
 data class FileContents(val s: String, val setExec: Boolean = false)
 

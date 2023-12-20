@@ -4,13 +4,7 @@ import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.ptr
 import okio.Path
 
-import platform.posix.chmod
 import platform.posix.stat
-
-actual fun makeExecutable(path: Path) {
-    val mode = 0b111_111_111u
-    chmod(path.toString(), mode)
-}
 
 @OptIn(ExperimentalForeignApi::class)
 actual fun isExecutable(path: Path): Boolean = run {
