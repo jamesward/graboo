@@ -144,26 +144,26 @@ class IDEUtilTest {
     @Suppress("UnstableApiUsage")
     fun locations_mac(@TempDir cachesDir: File, @TempDir appDir: File) {
         val intellij = createCaches(OperatingSystem.MAC_OS, cachesDir, "JetBrains", "IntelliJIdea")
-        assertTrue(location(Archetype.ANDROIDAPP, cachesDir, appDir) == intellij)
+        assertTrue(location(Archetype.ANDROIDAPP, appDir, cachesDir) == intellij)
 
         val androidStudio = createCaches(OperatingSystem.MAC_OS, cachesDir, "Google", "AndroidStudio")
-        assertTrue(location(Archetype.ANDROIDAPP, cachesDir, appDir) == androidStudio)
-        assertTrue(location(Archetype.KOTLINAPP, cachesDir, appDir) == intellij)
+        assertTrue(location(Archetype.ANDROIDAPP, appDir, cachesDir) == androidStudio)
+        assertTrue(location(Archetype.KOTLINAPP, appDir, cachesDir) == intellij)
 
         val androidStudioPreview = createCaches(OperatingSystem.MAC_OS, cachesDir, "Google", "AndroidStudioPreview")
-        assertTrue(location(Archetype.ANDROIDAPP, cachesDir, appDir) == androidStudioPreview)
+        assertTrue(location(Archetype.ANDROIDAPP, appDir, cachesDir) == androidStudioPreview)
 
         val intellijAppDir = File(appDir, "IntelliJ IDEA.app")
         intellijAppDir.mkdirs()
-        assertTrue(location(Archetype.ANDROIDAPP, cachesDir, appDir) == intellijAppDir)
+        assertTrue(location(Archetype.ANDROIDAPP, appDir, cachesDir) == intellijAppDir)
 
         val androidStudioAppDir = File(appDir, "Android Studio.app")
         androidStudioAppDir.mkdirs()
-        assertTrue(location(Archetype.ANDROIDAPP, cachesDir, appDir) == androidStudioAppDir)
+        assertTrue(location(Archetype.ANDROIDAPP, appDir, cachesDir) == androidStudioAppDir)
 
         val androidStudioPreviewAppDir = File(appDir, "Android Studio Preview.app")
         androidStudioPreviewAppDir.mkdirs()
-        assertTrue(location(Archetype.ANDROIDAPP, cachesDir, appDir) == androidStudioPreviewAppDir)
+        assertTrue(location(Archetype.ANDROIDAPP, appDir, cachesDir) == androidStudioPreviewAppDir)
     }
 
     @Test
@@ -171,26 +171,26 @@ class IDEUtilTest {
     @Suppress("UnstableApiUsage")
     fun locations_windows(@TempDir cachesDir: File, @TempDir appDir: File) {
         val intellij = createCaches(OperatingSystem.WINDOWS, cachesDir, "JetBrains", "IntelliJIdea")
-        assertTrue(location(Archetype.ANDROIDAPP, cachesDir, appDir) == intellij)
+        assertTrue(location(Archetype.ANDROIDAPP, appDir, cachesDir) == intellij)
 
         val androidStudio = createCaches(OperatingSystem.WINDOWS, cachesDir, "Google", "AndroidStudio")
-        assertTrue(location(Archetype.ANDROIDAPP, cachesDir, appDir) == androidStudio)
-        assertTrue(location(Archetype.KOTLINAPP, cachesDir, appDir) == intellij)
+        assertTrue(location(Archetype.ANDROIDAPP, appDir, cachesDir) == androidStudio)
+        assertTrue(location(Archetype.KOTLINAPP, appDir, cachesDir) == intellij)
 
         val androidStudioPreview = createCaches(OperatingSystem.WINDOWS, cachesDir, "Google", "AndroidStudioPreview")
-        assertTrue(location(Archetype.ANDROIDAPP, cachesDir, appDir) == androidStudioPreview)
+        assertTrue(location(Archetype.ANDROIDAPP, appDir, cachesDir) == androidStudioPreview)
 
         val intellijAppDir = File(appDir, "JetBrains\\IntelliJ IDEA 2023.3")
         intellijAppDir.mkdirs()
-        assertTrue(location(Archetype.ANDROIDAPP, cachesDir, appDir) == intellijAppDir)
+        assertTrue(location(Archetype.ANDROIDAPP, appDir, cachesDir) == intellijAppDir)
 
         val androidStudioAppDir = File(appDir, "Google\\Android Studio 2023.3")
         androidStudioAppDir.mkdirs()
-        assertTrue(location(Archetype.ANDROIDAPP, cachesDir, appDir) == androidStudioAppDir)
+        assertTrue(location(Archetype.ANDROIDAPP, appDir, cachesDir) == androidStudioAppDir)
 
         val androidStudioPreviewAppDir = File(appDir, "Google\\Android Studio Preview 2023.3")
         androidStudioPreviewAppDir.mkdirs()
-        assertTrue(location(Archetype.ANDROIDAPP, cachesDir, appDir) == androidStudioPreviewAppDir)
+        assertTrue(location(Archetype.ANDROIDAPP, appDir, cachesDir) == androidStudioPreviewAppDir)
     }
 
 }
