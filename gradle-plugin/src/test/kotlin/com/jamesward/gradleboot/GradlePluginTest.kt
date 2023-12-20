@@ -242,7 +242,7 @@ class GradlePluginTest {
         val jvmOnly = File(examplesDir, "javaapp/hello-world")
         val result = GradleRunner.create()
             .withProjectDir(jvmOnly)
-            .withArguments("ide")
+            .withArguments("ide", "--stacktrace")
             .build()
 
         println(result.output)

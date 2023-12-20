@@ -19,7 +19,7 @@ set "actualcmdx=%cmdcmdline:"=x%"
 
 set CMDS=%*
 if /I "%dclickcmdx%" EQU "%actualcmdx%" (
-    set CMDS="ide"
+    set CMDS=ide
 )
 
 %EXE% %CMDS%

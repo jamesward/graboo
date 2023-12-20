@@ -51,11 +51,13 @@ object IDEUtil {
 
     data class Version(val product: String, val year: Int, val sub: Int)
 
-    fun File.parseVersion(): Version = run {
+    fun File.parseVersion(): Version? = run {
         val product = this.name.takeWhile { !it.isDigit() }.trimEnd()
-        val year = this.name.dropWhile { !it.isDigit() }.takeWhile { it.isDigit() }
-        val sub = this.name.takeLastWhile { it.isDigit() }
-        Version(product, year.toInt(), sub.toInt())
+        this.name.dropWhile { !it.isDigit() }.takeWhile { it.isDigit() }.notNullOrEmpty()?.let { year ->
+            this.name.takeLastWhile { it.isDigit() }.notNullOrEmpty()?.let { sub ->
+                Version(product, year.toInt(), sub.toInt())
+            }
+        }
     }
 
     private val compareVersion = compareBy<Pair<File, Version>>({it.second.year}, {it.second.sub}).reversed()
@@ -64,7 +66,7 @@ object IDEUtil {
         this.existsOrNull()?.let { baseDir ->
             File(baseDir, vendor).existsOrNull()?.let { vendorDir ->
                 vendorDir.listFiles()
-                    ?.map { it to it.parseVersion() }
+                    ?.mapNotNull { file -> file.parseVersion()?.let { file to it } }
                     ?.filter { it.second.product == product }
                     ?.sortedWith(compareVersion)
                     ?.firstOrNull()

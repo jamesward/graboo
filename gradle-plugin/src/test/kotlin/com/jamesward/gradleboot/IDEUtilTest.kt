@@ -17,21 +17,21 @@ class IDEUtilTest {
     @EnabledOnOs(OS.MAC, OS.LINUX)
     fun parseVersion_works_unix() {
         File("/home/foo/.cache/JetBrains/IntelliJIdea2023.2").parseVersion().let {
-            assertTrue(it.product == "IntelliJIdea")
-            assertTrue(it.year == 2023)
-            assertTrue(it.sub == 2)
+            assertTrue(it?.product == "IntelliJIdea")
+            assertTrue(it?.year == 2023)
+            assertTrue(it?.sub == 2)
         }
 
         File("/home/foo/.cache/JetBrains/AndroidStudio2021.1").parseVersion().let {
-            assertTrue(it.product == "AndroidStudio")
-            assertTrue(it.year == 2021)
-            assertTrue(it.sub == 1)
+            assertTrue(it?.product == "AndroidStudio")
+            assertTrue(it?.year == 2021)
+            assertTrue(it?.sub == 1)
         }
 
         File("/home/foo/.cache/JetBrains/AndroidStudioPreview2023.1").parseVersion().let {
-            assertTrue(it.product == "AndroidStudioPreview")
-            assertTrue(it.year == 2023)
-            assertTrue(it.sub == 1)
+            assertTrue(it?.product == "AndroidStudioPreview")
+            assertTrue(it?.year == 2023)
+            assertTrue(it?.sub == 1)
         }
     }
 
@@ -39,21 +39,21 @@ class IDEUtilTest {
     @EnabledOnOs(OS.WINDOWS)
     fun parseVersion_works_windows() {
         File("C:\\Program Files\\JetBrains\\IntelliJ IDEA 2020.1").parseVersion().let {
-            assertTrue(it.product == "IntelliJ IDEA")
-            assertTrue(it.year == 2020)
-            assertTrue(it.sub == 1)
+            assertTrue(it?.product == "IntelliJ IDEA")
+            assertTrue(it?.year == 2020)
+            assertTrue(it?.sub == 1)
         }
 
         File("C:\\Program Files\\Google\\Android Studio 2022.3").parseVersion().let {
-            assertTrue(it.product == "Android Studio")
-            assertTrue(it.year == 2022)
-            assertTrue(it.sub == 3)
+            assertTrue(it?.product == "Android Studio")
+            assertTrue(it?.year == 2022)
+            assertTrue(it?.sub == 3)
         }
 
         File("C:\\Program Files\\Google\\Android Studio Preview 2021.2").parseVersion().let {
-            assertTrue(it.product == "Android Studio Preview")
-            assertTrue(it.year == 2021)
-            assertTrue(it.sub == 2)
+            assertTrue(it?.product == "Android Studio Preview")
+            assertTrue(it?.year == 2021)
+            assertTrue(it?.sub == 2)
         }
     }
 
