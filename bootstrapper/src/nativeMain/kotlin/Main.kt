@@ -137,7 +137,6 @@ suspend fun getLatestJdk(): Pair<String, ByteArray> = run {
 }
 
 // todo: stream output
-@OptIn(ExperimentalNativeApi::class)
 @ExperimentalForeignApi
 suspend fun runGradleWrapper(grabooDir: Path, jdk: Path, args: Array<String>) = run {
     val bootwrapperJar = grabooDir / "bootwrapper.jar"
@@ -196,6 +195,7 @@ fun javaExe(jdk: Path): Path {
 
 
 // bug: entrypoint can't be a suspend fun
+// todo: update graboo bootstrapper from here
 @OptIn(ExperimentalForeignApi::class, ExperimentalNativeApi::class)
 fun main(args: Array<String>): Unit = runBlocking {
     // todo: windows & *nix graboo examples (i.e `./graboo`)
