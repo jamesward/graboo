@@ -77,9 +77,9 @@ object IDEUtil {
         when(OS.current()) {
             OperatingSystem.WINDOWS -> {
                 Detections(
-                    baseDir?.findLatest("Android", "Android Studio"),
+                    File(baseDir, "Android\\Android Studio").existsOrNull(),
                     null,
-                    baseDir?.findLatest("JetBrains", "IntelliJ IDEA"),
+                    baseDir?.findLatest("JetBrains", "IntelliJ IDEA")?.existsOrNull(),
                     null,
                 )
             }

@@ -56,4 +56,11 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           .\gradlew test
-#          .\gradlew allTests
+
+      - name: allTest
+        if: matrix.os == 'windows'
+        shell: powershell
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          .\gradlew allTests
