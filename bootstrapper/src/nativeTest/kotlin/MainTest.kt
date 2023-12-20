@@ -1,4 +1,5 @@
 import com.benasher44.uuid.uuid4
+import com.kgit2.process.Command
 import io.ktor.util.*
 import kotlinx.coroutines.runBlocking
 import okio.FileSystem
@@ -60,6 +61,25 @@ class MainTest {
         val (filename, bytes) = getLatestJdk()
         assertTrue(filename.isNotBlank())
         assertTrue(bytes.size > 100_000_000)
+    }
+
+    @Test
+    fun get_and_run_jdk() = runBlocking {
+        val jdkDir = tmpDir / "jdk"
+        FileSystem.SYSTEM.createDirectories(jdkDir, false)
+
+        val jdk = setupJdk("21.0.1_12", jdkDir, jdkDir / "current.properties")
+        assertTrue(FileSystem.SYSTEM.exists(jdk), "$jdk exists")
+
+        val javaExe = javaExe(jdk)
+        assertTrue(FileSystem.SYSTEM.exists(javaExe), "$javaExe exists")
+
+        val result = Command(javaExe.toString())
+                .args("-version")
+                .spawn()
+                .wait()
+
+        assertTrue(result.code == 0)
     }
 
     // todo: test for runGradleWrapper

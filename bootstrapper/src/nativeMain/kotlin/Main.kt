@@ -165,12 +165,7 @@ suspend fun runGradleWrapper(grabooDir: Path, jdk: Path, args: Array<String>) = 
         """.trimIndent())
     }
 
-    val javaExec = if (Platform.osFamily == OsFamily.MACOSX) {
-        jdk / "Contents" / "Home" / "bin" / "java"
-    }
-    else {
-        jdk / "bin" / "java"
-    }
+    val javaExec = javaExe(jdk)
 
     val fullArgs = arrayOf("-Dgraboo.dir=$grabooDir", "-jar", bootwrapperJar.toString()) + args
 
@@ -187,6 +182,17 @@ suspend fun runGradleWrapper(grabooDir: Path, jdk: Path, args: Array<String>) = 
     }
 }
 
+
+@OptIn(ExperimentalNativeApi::class)
+fun javaExe(jdk: Path): Path {
+    val javaExec = when(Platform.osFamily) {
+        OsFamily.MACOSX -> jdk / "Contents" / "Home" / "bin" / "java"
+        OsFamily.WINDOWS -> jdk / "bin" / "java.exe"
+        OsFamily.LINUX -> jdk / "bin" / "java"
+        else -> throw Exception("Unsupported Platform")
+    }
+    return javaExec
+}
 
 
 // bug: entrypoint can't be a suspend fun
@@ -276,7 +282,10 @@ fun main(args: Array<String>): Unit = runBlocking {
                 exit(1)
             }
 
-            val grabooDir = homePath / ".graboo"
+            val grabooDir = when(Platform.osFamily) {
+                OsFamily.WINDOWS -> homePath / "graboo"
+                else -> homePath / ".graboo"
+            }
 
             val grabooJdk = grabooDir / "jdk"
             FileSystem.SYSTEM.createDirectories(grabooJdk, false)
@@ -295,32 +304,7 @@ fun main(args: Array<String>): Unit = runBlocking {
 
             // todo: update JDK to newer
 
-            val jdk = if ((currentVersion == null) || (!FileSystem.SYSTEM.exists(grabooJdk / currentVersion))) {
-                println("Downloading a JDK")
-
-                val (filename, bytes) = getLatestJdk()
-
-                // todo: check file hash
-
-                val version = filename.removeSuffix(".tar.gz").removeSuffix(".zip").substringAfter("hotspot_")
-
-                FileSystem.SYSTEM.delete(currentProps)
-                FileSystem.SYSTEM.write(currentProps, true) {
-                    writeUtf8("version=$version")
-                }
-
-                val jdkDir = grabooJdk / version
-
-                // todo: stream write instead of in-memory buffer whole file
-                saveToTempExtractAndDelete(filename, jdkDir, bytes)
-
-                jdkDir
-            }
-            else {
-                val jdkDir = grabooJdk / currentVersion
-                println("Using JDK from $jdkDir")
-                jdkDir
-            }
+            val jdk = setupJdk(currentVersion, grabooJdk, currentProps)
 
             // todo: check gradle version
             // maybe use: https://services.gradle.org/versions/
@@ -333,5 +317,34 @@ fun main(args: Array<String>): Unit = runBlocking {
                 println("Entering Gradle Shell")
             }
         }
+    }
+}
+
+@OptIn(ExperimentalForeignApi::class)
+suspend fun setupJdk(currentVersion: String?, grabooJdk: Path, currentProps: Path): Path = run {
+    if ((currentVersion == null) || (!FileSystem.SYSTEM.exists(grabooJdk / currentVersion))) {
+        println("Downloading a JDK")
+
+        val (filename, bytes) = getLatestJdk()
+
+        // todo: check file hash
+
+        val version = filename.removeSuffix(".tar.gz").removeSuffix(".zip").substringAfter("hotspot_")
+
+        FileSystem.SYSTEM.delete(currentProps)
+        FileSystem.SYSTEM.write(currentProps, true) {
+            writeUtf8("version=$version")
+        }
+
+        val jdkDir = grabooJdk / version
+
+        // todo: stream write instead of in-memory buffer whole file
+        saveToTempExtractAndDelete(filename, jdkDir, bytes)
+
+        jdkDir
+    } else {
+        val jdkDir = grabooJdk / currentVersion
+        println("Using JDK from $jdkDir")
+        jdkDir
     }
 }
