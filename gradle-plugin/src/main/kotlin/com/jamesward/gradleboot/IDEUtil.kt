@@ -134,7 +134,7 @@ object IDEUtil {
             }
         }
 
-    private fun defaultLogBase(): File? =
+    private fun defaultCachesBase(): File? =
         when(OS.current()) {
             OperatingSystem.WINDOWS ->
                 System.getenv("LOCALAPPDATA").notNullOrEmpty()?.let { appData ->
@@ -148,7 +148,7 @@ object IDEUtil {
                 null
         }
 
-    private fun locationFromLogs(baseDir: File? = defaultLogBase()): Detections = run {
+    private fun locationFromCachess(baseDir: File? = defaultCachesBase()): Detections = run {
         Detections(
             baseDir.findIde("Google", "AndroidStudio"),
             baseDir.findIde("Google", "AndroidStudioPreview"),
@@ -158,18 +158,18 @@ object IDEUtil {
     }
 
     // todo: validate bin exe
-    fun location(archetype: Archetype?, baseTypicalDir: File? = defaultTypicalBase(), baseLogDir: File? = defaultLogBase()): File? = run {
+    fun location(archetype: Archetype?, baseTypicalDir: File? = defaultTypicalBase(), baseCachesDir: File? = defaultCachesBase()): File? = run {
         val fromTypicals = locationFromTypicals(baseTypicalDir)
-        val fromLogs = locationFromLogs(baseLogDir)
+        val fromCaches = locationFromCachess(baseCachesDir)
         when (archetype) {
             Archetype.ANDROIDAPP -> {
                 fromTypicals.androidStudioPreview ?: fromTypicals.androidStudio ?: fromTypicals.intellij ?: fromTypicals.vscode ?:
-                fromLogs.androidStudioPreview ?: fromLogs.androidStudio ?: fromLogs.intellij ?: fromLogs.vscode
+                fromCaches.androidStudioPreview ?: fromCaches.androidStudio ?: fromCaches.intellij ?: fromCaches.vscode
             }
 
             else -> {
                 fromTypicals.intellij ?: fromTypicals.androidStudioPreview ?: fromTypicals.androidStudio ?: fromTypicals.vscode ?:
-                fromLogs.intellij ?: fromLogs.androidStudioPreview ?: fromLogs.androidStudio ?: fromLogs.vscode
+                fromCaches.intellij ?: fromCaches.androidStudioPreview ?: fromCaches.androidStudio ?: fromCaches.vscode
             }
         }
     }
