@@ -11,7 +11,7 @@ jobs:
           GCP_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
         if: ${{ env.GCP_CREDENTIALS != '' }}
         run: |
-          echo "::set-output name=defined::true"
+          echo "defined=true" >> $GITHUB_OUTPUT
 
   build:
     name: build-and-deploy
