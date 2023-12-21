@@ -271,7 +271,7 @@ data class SemVer(val major: Int, val minor: Int, val patch: Int) {
         compareSemVer.compare(this, other)
 }
 
-@OptIn(ExperimentalForeignApi::class, ExperimentalNativeApi::class)
+@OptIn(ExperimentalNativeApi::class)
 fun getArtifact(): String? =
     when (Platform.osFamily to Platform.cpuArchitecture) {
         (OsFamily.MACOSX to CpuArchitecture.ARM64) -> "graboo-macos-arm64"

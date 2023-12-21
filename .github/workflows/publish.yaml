@@ -9,62 +9,13 @@ jobs:
   test:
     uses: ./.github/workflows/test.yaml
 
-  publish-plugin:
+  publish:
     needs: [test]
-    runs-on: ubuntu-latest
-    steps:
-      - id: secret-check
-        name: Check for Secret Availability
-        run: |
-          if [ "${{ secrets.GRADLE_PUBLISH_KEY }}" != '' ] && [ "${{ secrets.GRADLE_PUBLISH_SECRET }}" != '' ]; then
-            echo "available=true" >> $GITHUB_OUTPUT;
-          else
-            echo "available=false" >> $GITHUB_OUTPUT;
-          fi
-
-      - name: Checkout
-        if: ${{ steps.secret-check.outputs.available == 'true' }}
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup Gradle
-        if: ${{ steps.secret-check.outputs.available == 'true' }}
-        uses: gradle/gradle-build-action@v2
-
-      - name: Publish
-        if: ${{ steps.secret-check.outputs.available == 'true' }}
-        run: |
-          ./gradlew :gradle-plugin:publishPlugins -Pgradle.publish.key=${{ secrets.GRADLE_PUBLISH_KEY }} -Pgradle.publish.secret=${{ secrets.GRADLE_PUBLISH_SECRET }}
-
-      # todo: this doesn't fail when the gradle command fails
-      - id: get-version
-        name: Get Version
-        if: ${{ steps.secret-check.outputs.available == 'true' }}
-        run: |
-          echo "version=$(./gradlew version -q)" >> $GITHUB_OUTPUT
-
-      - name: Update Versions
-        if: ${{ steps.secret-check.outputs.available == 'true' }}
-        run: |
-          sed -ie "s/version \"[^\"]*\"/version \"${{ steps.get-version.outputs.version }}\"/" examples/*/*/settings.gradle.kts
-
-      - name: Commit Version Updates
-        if: ${{ steps.secret-check.outputs.available == 'true' }}
-        uses: test-room-7/action-update-file@v1
-        with:
-          file-path: |
-            examples/*/*/settings.gradle.kts
-          commit-msg: Update version
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-
-  publish-executables:
-    needs: [publish-plugin]
     permissions:
       contents: write
     strategy:
       matrix:
-        target: [macos-arm64, macos-x64, ubuntu-x64, windows-x64]
+        target: [ macos-arm64, macos-x64, ubuntu-x64, windows-x64 ]
         include:
           - target: ubuntu-x64
             os: ubuntu
@@ -92,17 +43,18 @@ jobs:
             asset-name: graboo-windows-x64.exe
     runs-on: ${{ matrix.runs }}
     steps:
+      - id: secret-check
+        name: Check for Secret Availability
+        run: |
+          if [ "${{ secrets.GRADLE_PUBLISH_KEY }}" == '' ] || [ "${{ secrets.GRADLE_PUBLISH_SECRET }}" == '' ]; then
+            println("need GRADLE_PUBLISH_KEY secret to continue")
+            exit(1)
+          fi
+
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          ref: main
-
-      - name: Install Dependencies
-        if: matrix.os == 'ubuntu'
-        run: |
-          sudo apt update
-          sudo apt-get install libcurl4-openssl-dev
 
       - uses: actions/setup-java@v4
         with:
@@ -112,16 +64,20 @@ jobs:
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2
 
+      - name: Publish Plugin
+        if: matrix.os == 'ubuntu'
+        run: |
+          ./gradlew :gradle-plugin:publishPlugins -Pgradle.publish.key=${{ secrets.GRADLE_PUBLISH_KEY }} -Pgradle.publish.secret=${{ secrets.GRADLE_PUBLISH_SECRET }}
+
+      - name: Install Dependencies
+        if: matrix.os == 'ubuntu'
+        run: |
+          sudo apt update
+          sudo apt-get install libcurl4-openssl-dev
+
       - name: graboo executable
         run: |
           ./gradlew :bootstrapper:linkReleaseExecutable${{ matrix.platform-name }}
-
-      - name: run upx
-        if: false
-        uses: svenstaro/upx-action@v2
-        with:
-          files: bootstrapper/build/bin/${{ matrix.platform-name }}/releaseExecutable/${{ matrix.release-file }}
-          args: --best --lzma
 
       - name: upload executables
         uses: actions/upload-artifact@v3
@@ -174,3 +130,21 @@ jobs:
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           file_pattern: 'examples/*/*/graboo.cmd'
+
+      # todo: this doesn't fail when the gradle command fails
+      - id: get-version
+        name: Get Version
+        if: matrix.os == 'ubuntu'
+        run: |
+          echo "version=$(./gradlew version -q)" >> $GITHUB_OUTPUT
+
+      - name: Update Versions
+        if: matrix.os == 'ubuntu'
+        run: |
+          sed -ie "s/version \"[^\"]*\"/version \"${{ steps.get-version.outputs.version }}\"/" examples/*/*/settings.gradle.kts
+
+      - name: Commit examples settings.gradle.kts
+        if: matrix.os == 'windows'
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          file_pattern: 'examples/*/*/settings.gradle.kts'
