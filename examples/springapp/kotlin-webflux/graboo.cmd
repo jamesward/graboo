@@ -13,4 +13,13 @@ powershell -Command "&{"^
 		"}"
 
 :runGraboo
-%EXE% %*
+
+set "dclickcmdx=%comspec% /c xx%~0x x"
+set "actualcmdx=%cmdcmdline:"=x%"
+
+set CMDS=%*
+if /I "%dclickcmdx%" EQU "%actualcmdx%" (
+    set CMDS=ide
+)
+
+%EXE% %CMDS%
