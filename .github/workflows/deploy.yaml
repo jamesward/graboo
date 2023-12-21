@@ -3,11 +3,13 @@ on: push
 jobs:
   check-env:
     outputs:
-      gcp-credentials-defined: ${{ get-gcp-credentials.outputs.defined }}
+      gcp-credentials-defined: ${{ steps.get-gcp-credentials.outputs.defined }}
     runs-on: ubuntu-latest
     steps:
       - id: get-gcp-credentials
-        if: ${{ secrets.GCP_CREDENTIALS != '' }}
+        env:
+          GCP_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
+        if: ${{ env.GCP_CREDENTIALS != '' }}
         run: |
           echo "::set-output name=defined::true"
 
