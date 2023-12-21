@@ -82,6 +82,15 @@ class MainTest {
         assertTrue(result.code == 0)
     }
 
+    @Test
+    fun compareSemVerWorks() {
+        assertTrue(SemVer("0.0.1")!! < SemVer("0.0.2")!!)
+        assertTrue(SemVer("0.0.1")!! < SemVer("0.1.0")!!)
+        assertTrue(SemVer("0.0.1")!! < SemVer("1.0.0")!!)
+        assertTrue(SemVer("0.1.2")!! < SemVer("0.2.0")!!)
+        assertTrue(SemVer("1.2.3")!! < SemVer("2.0.0")!!)
+    }
+
     // todo: test for runGradleWrapper
 
 }

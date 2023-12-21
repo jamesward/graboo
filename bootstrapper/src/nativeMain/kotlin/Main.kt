@@ -13,6 +13,7 @@ import kotlinx.cinterop.toKString
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import okio.FileSystem
 import okio.Path
@@ -22,7 +23,7 @@ import platform.posix.getenv
 import kotlin.experimental.ExperimentalNativeApi
 import kotlin.native.Platform
 
-@kotlinx.serialization.Serializable
+@Serializable
 data class AvailableReleases(val most_recent_lts: Int)
 
 private val client = HttpClient {
@@ -193,14 +194,154 @@ fun javaExe(jdk: Path): Path {
     return javaExec
 }
 
+@OptIn(ExperimentalForeignApi::class)
+suspend fun setupJdk(currentVersion: String?, grabooJdk: Path, currentProps: Path): Path = run {
+    if ((currentVersion == null) || (!FileSystem.SYSTEM.exists(grabooJdk / currentVersion))) {
+        println("Downloading a JDK")
+
+        val (filename, bytes) = getLatestJdk()
+
+        // todo: check file hash
+
+        val version = filename.removeSuffix(".tar.gz").removeSuffix(".zip").substringAfter("hotspot_")
+
+        FileSystem.SYSTEM.delete(currentProps)
+        FileSystem.SYSTEM.write(currentProps, true) {
+            writeUtf8("version=$version")
+        }
+
+        val jdkDir = grabooJdk / version
+
+        // todo: stream write instead of in-memory buffer whole file
+        saveToTempExtractAndDelete(filename, jdkDir, bytes)
+
+        jdkDir
+    } else {
+        val jdkDir = grabooJdk / currentVersion
+        println("Using JDK from $jdkDir")
+        jdkDir
+    }
+}
+
+@OptIn(ExperimentalNativeApi::class, ExperimentalForeignApi::class)
+private fun grabooDir(): Path? = run {
+    val storageDirEnv = when(Platform.osFamily) {
+        OsFamily.WINDOWS -> "LOCALAPPDATA"
+        else -> "HOME"
+    }
+
+    getenv(storageDirEnv)?.toKString()?.toPath()?.let { home ->
+        if (FileSystem.SYSTEM.exists(home)) {
+            when (Platform.osFamily) {
+                OsFamily.WINDOWS -> home / "graboo"
+                else -> home / ".graboo"
+            }
+        } else {
+            null
+        }
+    }
+}
+
+@Serializable
+data class Release(val tag_name: String)
+
+data class SemVer(val major: Int, val minor: Int, val patch: Int) {
+    companion object {
+        // very minimal assuming s = digits.digits.digits
+        operator fun invoke(s: String): SemVer? = run {
+            val parts = s.removePrefix("v").split(".")
+            if (parts.size == 3) {
+                parts.component1().toIntOrNull()?.let { major ->
+                    parts.component2().toIntOrNull()?.let { minor ->
+                        parts.component3().toIntOrNull()?.let { patch ->
+                            SemVer(major, minor, patch)
+                        }
+                    }
+                }
+            }
+            else {
+                null
+            }
+        }
+
+        val compareSemVer = compareBy<SemVer>({it.major}, {it.minor}, {it.patch})
+    }
+
+    operator fun compareTo(other: SemVer): Int =
+        compareSemVer.compare(this, other)
+}
+
+@OptIn(ExperimentalForeignApi::class, ExperimentalNativeApi::class)
+fun getArtifact(): String? =
+    when (Platform.osFamily to Platform.cpuArchitecture) {
+        (OsFamily.MACOSX to CpuArchitecture.ARM64) -> "graboo-macos-arm64"
+        (OsFamily.MACOSX to CpuArchitecture.X64) -> "graboo-macos-x64"
+        (OsFamily.LINUX to CpuArchitecture.X64) -> "graboo-linux-x64"
+        (OsFamily.WINDOWS to CpuArchitecture.X64) -> "graboo-windows-x64.exe"
+        else -> null
+    }
+
+suspend fun updateSelf(args: Array<String>, grabooDir: Path? = grabooDir(), forceUpdateTo: String? = null) {
+    val maybeUpdateToWithLatest: String? = if (forceUpdateTo == null) {
+        val thisVersion = Version()
+        SemVer(thisVersion)?.let { thisSemVer ->
+            val release = client.get("https://api.github.com/repos/jamesward/graboo/releases/latest").body<Release>()
+            SemVer(release.tag_name)?.let { latest ->
+                if (latest > thisSemVer) {
+                    release.tag_name
+                } else {
+                    null
+                }
+            }
+        }
+    }
+    else {
+        "v$forceUpdateTo"
+    }
+
+    maybeUpdateToWithLatest?.let { updateTo ->
+        grabooDir?.let {
+            val installedGraboo = FileSystem.SYSTEM.list(grabooDir).find { it.name.startsWith("graboo-") && !it.name.endsWith("-new") }
+            val maybeGrabooExe: Path? = installedGraboo ?: getArtifact()?.let { grabooDir / it}
+
+            maybeGrabooExe?.let { grabooExe ->
+                println("Updating to $updateTo")
+                val url = "https://github.com/jamesward/graboo/releases/download/$updateTo/${grabooExe.name}"
+                val response = client.get(url)
+                if (response.status.isSuccess()) {
+                    val bytes = client.get(url).readBytes()
+                    val newFile = grabooDir / "${grabooExe.name}-new"
+                    FileSystem.SYSTEM.write(newFile) {
+                        write(bytes)
+                    }
+                    makeExecutable(newFile)
+
+                    val result = Command(newFile.toString())
+                        .args(*args)
+                        .spawn()
+                        .wait()
+
+                    exit(result.exitStatus())
+                }
+            }
+        }
+    }
+}
 
 // bug: entrypoint can't be a suspend fun
-// todo: update graboo bootstrapper from here
-@OptIn(ExperimentalForeignApi::class, ExperimentalNativeApi::class)
+@OptIn(ExperimentalForeignApi::class)
 fun main(args: Array<String>): Unit = runBlocking {
-    // todo: windows & *nix graboo examples (i.e `./graboo`)
+    if (args.firstOrNull() == "update") {
+        val updateTo = args.getOrNull(1)
+        updateSelf(arrayOf("--help"), forceUpdateTo = updateTo)
+    }
+
+    // todo: only at most one per hour
+    updateSelf(args)
 
     if (args.firstOrNull() == "--help") {
+        println("Welcome to Graboo ${Version()}")
+        println()
         println("Create a new project:")
         println("  graboo new <type> <dir>")
         println()
@@ -210,6 +351,11 @@ fun main(args: Array<String>): Unit = runBlocking {
         println("Run the Graboo Shell:")
         println("  graboo")
         exit(1)
+    }
+
+    if (args.firstOrNull() == "--version") {
+        println(Version().removePrefix("v"))
+        exit(0)
     }
 
     if (args.firstOrNull() == "new") {
@@ -264,29 +410,7 @@ fun main(args: Array<String>): Unit = runBlocking {
         exit(0)
     }
     else {
-        val storageDirEnv = when(Platform.osFamily) {
-            OsFamily.WINDOWS -> "LOCALAPPDATA"
-            else -> "HOME"
-        }
-
-        val home = getenv(storageDirEnv)?.toKString()
-        if (home == null) {
-            println("Could not read $storageDirEnv dir")
-            exit(1)
-        }
-        else {
-            val homePath = home.toPath()
-
-            if (!FileSystem.SYSTEM.exists(homePath)) {
-                println("Home dir ($home) does not exist")
-                exit(1)
-            }
-
-            val grabooDir = when(Platform.osFamily) {
-                OsFamily.WINDOWS -> homePath / "graboo"
-                else -> homePath / ".graboo"
-            }
-
+        grabooDir()?.let { grabooDir ->
             val grabooJdk = grabooDir / "jdk"
             FileSystem.SYSTEM.createDirectories(grabooJdk, false)
 
@@ -314,37 +438,10 @@ fun main(args: Array<String>): Unit = runBlocking {
                 runGradleWrapper(grabooDir, jdk, args)
             }
             else {
-                println("Entering Gradle Shell")
+                println("TODO: Entering Gradle Shell")
             }
+        } ?: {
+            println("Could not determine a directory to store graboo stuff in.")
         }
-    }
-}
-
-@OptIn(ExperimentalForeignApi::class)
-suspend fun setupJdk(currentVersion: String?, grabooJdk: Path, currentProps: Path): Path = run {
-    if ((currentVersion == null) || (!FileSystem.SYSTEM.exists(grabooJdk / currentVersion))) {
-        println("Downloading a JDK")
-
-        val (filename, bytes) = getLatestJdk()
-
-        // todo: check file hash
-
-        val version = filename.removeSuffix(".tar.gz").removeSuffix(".zip").substringAfter("hotspot_")
-
-        FileSystem.SYSTEM.delete(currentProps)
-        FileSystem.SYSTEM.write(currentProps, true) {
-            writeUtf8("version=$version")
-        }
-
-        val jdkDir = grabooJdk / version
-
-        // todo: stream write instead of in-memory buffer whole file
-        saveToTempExtractAndDelete(filename, jdkDir, bytes)
-
-        jdkDir
-    } else {
-        val jdkDir = grabooJdk / currentVersion
-        println("Using JDK from $jdkDir")
-        jdkDir
     }
 }

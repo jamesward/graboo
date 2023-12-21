@@ -127,8 +127,23 @@ tasks.register("addBootWrapper") {
     }
 }
 
+tasks.register("addVersion") {
+    inputs.property("version", version)
+    outputs.files(layout.buildDirectory.file("generated/Version.kt"))
+
+    doLast {
+        val contents = """
+            object Version {
+                operator fun invoke(): String = "$version"
+            }
+        """.trimIndent()
+
+        outputs.files.singleFile.writeText(contents)
+    }
+}
+
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinNativeCompile>().configureEach {
-    dependsOn("addBootWrapper")
+    dependsOn("addBootWrapper", "addVersion")
 }
 
 /*
