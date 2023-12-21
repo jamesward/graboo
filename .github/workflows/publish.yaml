@@ -125,18 +125,6 @@ jobs:
           # todo: verify output
           .\graboo.cmd run
 
-      - name: Commit graboo Updates
-        if: matrix.os == 'ubuntu'
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          file_pattern: 'examples/*/*/graboo'
-
-      - name: Commit graboo.cmd Updates
-        if: matrix.os == 'windows'
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          file_pattern: 'examples/*/*/graboo.cmd'
-
       # todo: this doesn't fail when the gradle command fails
       - id: get-version
         name: Get Version
@@ -149,8 +137,21 @@ jobs:
         run: |
           sed -ie "s/version \"[^\"]*\"/version \"${{ steps.get-version.outputs.version }}\"/" examples/*/*/settings.gradle.kts
 
-      - name: Commit examples settings.gradle.kts
-        if: matrix.os == 'windows'
-        uses: stefanzweifel/git-auto-commit-action@v5
+      - name: Commit graboo and settings.gradle.kts Version Updates
+        if: matrix.os == 'ubuntu'
+        uses: test-room-7/action-update-file@v1
         with:
-          file_pattern: 'examples/*/*/settings.gradle.kts'
+          file-path: |
+            examples/*/*/graboo
+            examples/*/*/settings.gradle.kts
+          commit-msg: Updates for ${{ steps.get-version.outputs.version }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Commit graboo.cmd Version Updates
+        if: matrix.os == 'windows'
+        uses: test-room-7/action-update-file@v1
+        with:
+          file-path: |
+            examples/*/*/graboo.cmd
+          commit-msg: Updates for ${{ steps.get-version.outputs.version }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
