@@ -14,12 +14,13 @@ import io.ktor.server.util.*
 import io.ktor.util.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import okio.FileSystem
 import okio.Path
 
 
-fun createZip(dir: Path, archetype: Archetype, name: String): Path = runBlocking(Dispatchers.IO) {
+suspend fun createZip(dir: Path, archetype: Archetype, name: String): Path = run {
     val templateDir = dir / name
     val zipFile = dir / "$name.zip"
 
@@ -53,6 +54,27 @@ fun main() {
         }
     }
 
+    // from: https://stackoverflow.com/a/46890009/77409
+    suspend fun <T> retryIO(
+        times: Int = Int.MAX_VALUE,
+        initialDelay: Long = 100, // 0.1 second
+        maxDelay: Long = 1000,    // 1 second
+        factor: Double = 2.0,
+        block: suspend () -> T): T
+    {
+        var currentDelay = initialDelay
+        repeat(times - 1) {
+            try {
+                return block()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+            delay(currentDelay)
+            currentDelay = (currentDelay * factor).toLong().coerceAtMost(maxDelay)
+        }
+        return block() // last attempt
+    }
+
     val server = embeddedServer(CIO, port = 8080) {
         install(callLogging)
 
@@ -69,7 +91,7 @@ fun main() {
                 }
                 else {
                     val tmpDir = FileSystem.SYSTEM_TEMPORARY_DIRECTORY / uuid4().toString()
-                    val zipFile = createZip(tmpDir, archetype, name)
+                    val zipFile = retryIO { createZip(tmpDir, archetype, name) }
                     call.respondPath(zipFile)
                 }
             }
