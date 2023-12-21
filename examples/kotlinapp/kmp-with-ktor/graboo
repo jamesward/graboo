@@ -41,6 +41,10 @@ mkdir -p $HOME/.graboo
 
 executable=$HOME/.graboo/$exec_name
 
+if [ -e "$executable-new" ] ; then
+  mv $executable-new $executable
+fi
+
 if [ ! -e "$executable" ] ; then
   url="https://github.com/jamesward/graboo/releases/latest/download/$exec_name"
   if command -v wget > /dev/null; then
