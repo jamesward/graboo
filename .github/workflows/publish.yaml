@@ -144,7 +144,7 @@ jobs:
           file-path: |
             examples/*/*/graboo
             examples/*/*/settings.gradle.kts
-          commit-msg: Updates for ${{ steps.get-version.outputs.version }}
+          commit-msg: Updates for ${{ github.ref }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Commit graboo.cmd Version Updates
@@ -153,5 +153,5 @@ jobs:
         with:
           file-path: |
             examples/*/*/graboo.cmd
-          commit-msg: Updates for ${{ steps.get-version.outputs.version }}
+          commit-msg: Updates for ${{ github.ref }}
           github-token: ${{ secrets.GITHUB_TOKEN }}

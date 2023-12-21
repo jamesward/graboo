@@ -60,6 +60,7 @@ kotlin {
                 implementation(project(":templater"))
                 implementation(universe.ktor.server.core)
                 implementation(universe.ktor.server.cio)
+                implementation(universe.ktor.client.core)
                 implementation(universe.arrow.kt.suspendapp)
                 implementation(universe.arrow.kt.suspendapp.ktor)
                 implementation(universe.benasher44.uuid)
@@ -74,8 +75,15 @@ kotlin {
             }
         }
 
+        linuxMain {
+            dependencies {
+                implementation(universe.ktor.client.curl)
+            }
+        }
+
         jvmMain {
             dependencies {
+                implementation(universe.ktor.client.java)
                 runtimeOnly(universe.slf4j.simple)
             }
         }

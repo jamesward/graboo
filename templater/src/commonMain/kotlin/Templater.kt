@@ -29,7 +29,7 @@ suspend fun writeFilesToDir(files: Map<Path, FileContents>, dir: Path) {
 
 object Templater {
 
-    fun contents(archetype: Archetype): Map<Path, FileContents> = run {
+    fun contents(archetype: Archetype, grabooVersion: String? = null): Map<Path, FileContents> = run {
 
         val buildGradleKtsBody = when (archetype) {
             Archetype.SPRINGAPP ->
@@ -78,7 +78,7 @@ object Templater {
             }
 
             plugins {
-                id("com.jamesward.gradleboot") version "${GrabooProperties.version}"
+                id("com.jamesward.gradleboot") version "${grabooVersion ?: GrabooProperties.version}"
             }
             """.trimIndent()
 

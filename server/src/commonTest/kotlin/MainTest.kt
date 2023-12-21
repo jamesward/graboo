@@ -23,7 +23,7 @@ class MainTest {
 
     @Test
     fun createZip_works() = runBlocking {
-        val zipFile = createZip(tmpDir, Archetype.KOTLINAPP, "foo")
+        val zipFile = createZip(tmpDir, Archetype.KOTLINAPP, "foo", null)
         assertTrue(zipFile.name == "foo.zip")
 
         Command("unzip")

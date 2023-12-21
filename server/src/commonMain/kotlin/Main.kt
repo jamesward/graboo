@@ -1,5 +1,8 @@
 import com.benasher44.uuid.uuid4
 import com.kgit2.process.Command
+import io.ktor.client.*
+import io.ktor.client.request.*
+import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.application.hooks.*
@@ -20,11 +23,11 @@ import okio.FileSystem
 import okio.Path
 
 
-suspend fun createZip(dir: Path, archetype: Archetype, name: String): Path = run {
+suspend fun createZip(dir: Path, archetype: Archetype, name: String, grabooVersion: String?): Path = run {
     val templateDir = dir / name
     val zipFile = dir / "$name.zip"
 
-    val contents = Templater.contents(archetype)
+    val contents = Templater.contents(archetype, grabooVersion)
     Templater.write(contents, templateDir)
 
     Command("zip")
@@ -41,6 +44,15 @@ suspend fun createZip(dir: Path, archetype: Archetype, name: String): Path = run
 expect suspend fun ApplicationCall.respondPath(path: Path)
 
 fun main() {
+    val client = HttpClient()
+
+    // todo: dev support
+    val latestGraboo: String? = runBlocking {
+        client.get("https://plugins.gradle.org/m2/com/jamesward/gradleboot/com.jamesward.gradleboot.gradle.plugin/maven-metadata.xml").bodyAsText().lines().find {
+            it.contains("<latest>")
+        }?.replace("<latest>", "")?.replace("</latest>", "")?.trim()?.removePrefix("v")
+    }
+
 //fun main() = SuspendApp {
     // resourceScope {
         //server(CIO, port = 8080) {
@@ -91,7 +103,7 @@ fun main() {
                 }
                 else {
                     val tmpDir = FileSystem.SYSTEM_TEMPORARY_DIRECTORY / uuid4().toString()
-                    val zipFile = retryIO { createZip(tmpDir, archetype, name) }
+                    val zipFile = retryIO { createZip(tmpDir, archetype, name, latestGraboo) }
                     call.respondPath(zipFile)
                 }
             }
