@@ -86,7 +86,7 @@ jobs:
           ./gradlew :bootstrapper:linkReleaseExecutable${{ matrix.platform-name }}
 
       - name: upload executables
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.asset-name }}
           path: bootstrapper/build/bin/${{ matrix.platform-name }}/releaseExecutable/${{ matrix.release-file }}
