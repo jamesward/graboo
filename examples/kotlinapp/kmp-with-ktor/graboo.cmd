@@ -2,6 +2,11 @@
 
 set GRABOO_DIR=%LOCALAPPDATA%\graboo
 set EXE=%GRABOO_DIR%\graboo-windows-x64.exe
+set EXE_NEW=%EXE%-new
+
+if exist "%EXE_NEW%" (
+    ren "%EXE_NEW%" "%EXE%"
+)
 
 if exist %EXE% goto runGraboo
 
