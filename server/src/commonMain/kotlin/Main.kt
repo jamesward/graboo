@@ -10,11 +10,14 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.util.*
 import io.ktor.util.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
+import kotlinx.coroutines.runBlocking
 import okio.FileSystem
 import okio.Path
 
 
-suspend fun createZip(dir: Path, archetype: Archetype, name: String): Path = run {
+fun createZip(dir: Path, archetype: Archetype, name: String): Path = runBlocking(Dispatchers.IO) {
     val templateDir = dir / name
     val zipFile = dir / "$name.zip"
 
