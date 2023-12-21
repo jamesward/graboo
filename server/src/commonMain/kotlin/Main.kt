@@ -2,9 +2,11 @@ import com.benasher44.uuid.uuid4
 import com.kgit2.process.Command
 import io.ktor.http.*
 import io.ktor.server.application.*
+import io.ktor.server.application.hooks.*
 import io.ktor.server.cio.*
 import io.ktor.server.engine.*
 import io.ktor.server.html.*
+import io.ktor.server.logging.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -41,44 +43,56 @@ fun main() {
 //fun main() = SuspendApp {
     // resourceScope {
         //server(CIO, port = 8080) {
-    val server = embeddedServer(CIO, port = 8080) {
-            routing {
-                get("/") {
-                    call.respondHtml(HttpStatusCode.OK, UI.index)
-                }
-                get("/{archetype}/{name}.zip") {
-                    val archetype = call.parameters["archetype"]?.let { Archetype(it) }
-                    val name = call.parameters["name"] ?: "demo"
-
-                    if (archetype == null) {
-                        call.respond(HttpStatusCode.NotFound, "The specified project type is not valid")
-                    }
-                    else {
-                        val tmpDir = FileSystem.SYSTEM_TEMPORARY_DIRECTORY / uuid4().toString()
-                        val zipFile = createZip(tmpDir, archetype, name)
-                        call.respondPath(zipFile)
-                    }
-                }
-                post("/download") {
-                    val formParameters = call.receiveParameters()
-                    val name = formParameters.getOrFail("project_name")
-                    Archetype(formParameters.getOrFail("project_type"))?.let { archetype ->
-                        call.respondRedirect("/$archetype/$name.zip")
-                    } ?: call.respond(HttpStatusCode.BadRequest)
-                }
-                /*
-                get("/graboo-server-js-wasm-js.wasm") {
-                    call.respondBytes(
-                        contentType = ContentType.parse("application/wasm"),
-                        bytes = StaticFiles.wasm.decodeBase64Bytes()
-                    )
-                }
-                get ("/graboo.js") {
-                    call.respondText(StaticFiles.js.decodeBase64String(), contentType = ContentType.Text.JavaScript)
-                }
-                 */
-            }
+    val callLogging: ApplicationPlugin<Unit> = createApplicationPlugin("CallLogging") {
+        on(ResponseSent) {
+            println(it.request.toLogString() to it.response.status())
         }
+        on(CallFailed) { call, cause ->
+            println(call.request.toLogString() to call.response.status())
+            cause.printStackTrace()
+        }
+    }
+
+    val server = embeddedServer(CIO, port = 8080) {
+        install(callLogging)
+
+        routing {
+            get("/") {
+                call.respondHtml(HttpStatusCode.OK, UI.index)
+            }
+            get("/{archetype}/{name}.zip") {
+                val archetype = call.parameters["archetype"]?.let { Archetype(it) }
+                val name = call.parameters["name"] ?: "demo"
+
+                if (archetype == null) {
+                    call.respond(HttpStatusCode.NotFound, "The specified project type is not valid")
+                }
+                else {
+                    val tmpDir = FileSystem.SYSTEM_TEMPORARY_DIRECTORY / uuid4().toString()
+                    val zipFile = createZip(tmpDir, archetype, name)
+                    call.respondPath(zipFile)
+                }
+            }
+            post("/download") {
+                val formParameters = call.receiveParameters()
+                val name = formParameters.getOrFail("project_name")
+                Archetype(formParameters.getOrFail("project_type"))?.let { archetype ->
+                    call.respondRedirect("/$archetype/$name.zip")
+                } ?: call.respond(HttpStatusCode.BadRequest)
+            }
+            /*
+            get("/graboo-server-js-wasm-js.wasm") {
+                call.respondBytes(
+                    contentType = ContentType.parse("application/wasm"),
+                    bytes = StaticFiles.wasm.decodeBase64Bytes()
+                )
+            }
+            get ("/graboo.js") {
+                call.respondText(StaticFiles.js.decodeBase64String(), contentType = ContentType.Text.JavaScript)
+            }
+             */
+        }
+    }
         //awaitCancellation()
     //}
     server.start(wait = true)
