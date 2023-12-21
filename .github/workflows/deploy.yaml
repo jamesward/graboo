@@ -1,9 +1,20 @@
 on: push
 
 jobs:
+  check-env:
+    outputs:
+      gcp-credentials-defined: ${{ get-gcp-credentials.outputs.defined }}
+    runs-on: ubuntu-latest
+    steps:
+      - id: get-gcp-credentials
+        if: ${{ secrets.GCP_CREDENTIALS != '' }}
+        run: |
+          echo "::set-output name=defined::true"
+
   build:
     name: build-and-deploy
-    if: ${{ secrets.GCP_CREDENTIALS != '' }}
+    needs: [ check-env ]
+    if: needs.check-env.outputs.gcp-credentials-defined == 'true'
     runs-on: ubuntu-latest
 
     steps:
