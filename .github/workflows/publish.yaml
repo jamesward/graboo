@@ -86,7 +86,7 @@ jobs:
           ./gradlew :bootstrapper:linkReleaseExecutable${{ matrix.platform-name }}
 
       - name: test graboo
-        if: matrix.os != windows
+        if: matrix.os != 'windows'
         run: |
           mkdir ~/.graboo
           cp ${{ github.workspace }}/bootstrapper/build/bin/${{ matrix.platform-name }}/releaseExecutable/${{ matrix.release-file }} ~/.graboo/
