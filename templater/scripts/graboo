@@ -58,4 +58,4 @@ if [ ! -e "$executable" ] ; then
   chmod +x $executable
 fi
 
-exec "$executable" "$args"
+exec "$executable" $args

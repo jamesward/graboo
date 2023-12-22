@@ -89,7 +89,7 @@ jobs:
         if: matrix.os != 'windows'
         run: |
           mkdir ~/.graboo
-          cp ${{ github.workspace }}/bootstrapper/build/bin/${{ matrix.platform-name }}/releaseExecutable/${{ matrix.release-file }} ~/.graboo/
+          cp ${{ github.workspace }}/bootstrapper/build/bin/${{ matrix.platform-name }}/releaseExecutable/${{ matrix.release-file }} ~/.graboo/${{ matrix.asset-name }}
           cd ${{ runner.temp }}
           ${{ github.workspace }}/templater/scripts/graboo new javaapp javaapp
           cd javaapp
@@ -101,7 +101,7 @@ jobs:
         if: matrix.os == 'windows'
         run: |
           mkdir ~/AppData/Local/graboo
-          cp ${{ github.workspace }}/bootstrapper/build/bin/${{ matrix.platform-name }}/releaseExecutable/${{ matrix.release-file }} ~/AppData/Local/graboo/
+          cp ${{ github.workspace }}/bootstrapper/build/bin/${{ matrix.platform-name }}/releaseExecutable/${{ matrix.release-file }} ~/AppData/Local/graboo/${{ matrix.asset-name }}
           cd ${{ runner.temp }}
           ${{ github.workspace }}/templater/scripts/graboo.cmd new javaapp javaapp
           cd javaapp

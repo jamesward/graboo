@@ -352,6 +352,15 @@ fun main(args: Array<String>): Unit = runBlocking {
         exit(result.exitStatus())
     }
 
+    val helpText =
+        """
+        Run Gradle task:
+          graboo <task>
+
+        Run the Graboo Shell:
+          graboo
+        """.trimIndent()
+
     if (args.firstOrNull() == "--help") {
         println(
             """
@@ -360,11 +369,7 @@ fun main(args: Array<String>): Unit = runBlocking {
             Create a new project:
               graboo new <type> <dir>
 
-            Run Gradle task:
-              graboo <task>
-
-            Run the Graboo Shell:
-              graboo
+            $helpText
             """.trimIndent()
         )
 
@@ -412,19 +417,17 @@ fun main(args: Array<String>): Unit = runBlocking {
             Templater.write(contents, projectDir)
         }
 
-        println()
-        println("Your project is ready!")
-        println()
-        println("First change to your new project directory:")
-        println("  cd $projectDir")
-        println()
+        println(
+            """
+                Your project is ready!
 
-        // todo: same as help
-        println("Then run Gradle tasks:")
-        println("  graboo <task>")
-        println()
-        println("Or enter the Graboo Shell:")
-        println("  graboo")
+                First change to your new project directory:")
+                  cd $projectDir
+
+                $helpText
+            """.trimIndent()
+        )
+
         exit(0)
     }
     else {
