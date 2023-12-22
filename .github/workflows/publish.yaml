@@ -85,6 +85,29 @@ jobs:
         run: |
           ./gradlew :bootstrapper:linkReleaseExecutable${{ matrix.platform-name }}
 
+      - name: test graboo
+        if: matrix.os != windows
+        run: |
+          mkdir ~/.graboo
+          cp ${{ github.workspace }}/bootstrapper/build/bin/${{ matrix.platform-name }}/releaseExecutable/${{ matrix.release-file }} ~/.graboo/
+          cd ${{ runner.temp }}
+          ${{ github.workspace }}/templater/scripts/graboo new javaapp javaapp
+          cd javaapp
+          output=$(./graboo run)
+          echo $output
+          echo $output | grep --quiet "hello, world"
+
+      - name: test graboo.cmd
+        if: matrix.os == 'windows'
+        run: |
+          mkdir ~/AppData/Local/graboo
+          cp ${{ github.workspace }}/bootstrapper/build/bin/${{ matrix.platform-name }}/releaseExecutable/${{ matrix.release-file }} ~/AppData/Local/graboo/
+          cd ${{ runner.temp }}
+          ${{ github.workspace }}/templater/scripts/graboo.cmd new javaapp javaapp
+          cd javaapp
+          # todo: verify output
+          .\graboo.cmd run
+
       - name: upload executables
         uses: actions/upload-artifact@v4
         with:
@@ -99,59 +122,3 @@ jobs:
           asset_name: ${{ matrix.asset-name }}
           overwrite: true
           tag: ${{ github.ref }}
-
-      - name: update graboo
-        if: matrix.os == 'ubuntu'
-        run: |
-          for f in examples/*/*; do cp -p templater/scripts/graboo $f; done
-
-      - name: update graboo.cmd
-        if: matrix.os == 'windows'
-        run: |
-          dir "examples/*/*" | foreach-object { copy-item -path templater/scripts/graboo.cmd -destination $_ }
-
-      - name: test graboo on ${{ matrix.target }}
-        if: matrix.target == 'ubuntu-x64' || matrix.target == 'macos-x64'
-        run: |
-          cd examples/javaapp/hello-world
-          output=$(./graboo run)
-          echo $output
-          echo $output | grep --quiet "hello, world"
-
-      - name: test graboo on ${{ matrix.target }}
-        if: matrix.os == 'windows'
-        run: |
-          cd examples/javaapp/hello-world
-          # todo: verify output
-          .\graboo.cmd run
-
-      # todo: this doesn't fail when the gradle command fails
-      - id: get-version
-        name: Get Version
-        if: matrix.os == 'ubuntu'
-        run: |
-          echo "version=$(./gradlew version -q)" >> $GITHUB_OUTPUT
-
-      - name: Update Versions
-        if: matrix.os == 'ubuntu'
-        run: |
-          sed -ie "s/version \"[^\"]*\"/version \"${{ steps.get-version.outputs.version }}\"/" examples/*/*/settings.gradle.kts
-
-      - name: Commit graboo and settings.gradle.kts Version Updates
-        if: matrix.os == 'ubuntu'
-        uses: test-room-7/action-update-file@v1
-        with:
-          file-path: |
-            examples/*/*/graboo
-            examples/*/*/settings.gradle.kts
-          commit-msg: Updates for ${{ github.ref }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Commit graboo.cmd Version Updates
-        if: matrix.os == 'windows'
-        uses: test-room-7/action-update-file@v1
-        with:
-          file-path: |
-            examples/*/*/graboo.cmd
-          commit-msg: Updates for ${{ github.ref }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
