@@ -19,18 +19,18 @@ plugins {
 }
 
 kotlin {
-    linuxX64 {
-        binaries {
-            executable(listOf(DEBUG, RELEASE)) {
-                entryPoint = "main"
-                linkerOpts("--as-needed")
-                freeCompilerArgs += "-Xoverride-konan-properties=linkerGccFlags.linux_x64=-lgcc -lgcc_eh -lc"
+    // don't setup these platforms unless on Linux
+    if (org.gradle.internal.os.OperatingSystem.current().isLinux) {
+        linuxX64 {
+            binaries {
+                executable(listOf(DEBUG, RELEASE)) {
+                    entryPoint = "main"
+                    linkerOpts("--as-needed")
+                    freeCompilerArgs += "-Xoverride-konan-properties=linkerGccFlags.linux_x64=-lgcc -lgcc_eh -lc"
+                }
             }
         }
-    }
 
-    // don't setup this platform unless on Linux
-    if (org.gradle.internal.os.OperatingSystem.current().isLinux) {
         jvm {
             jvmToolchain(17)
             @OptIn(ExperimentalKotlinGradlePluginApi::class)
