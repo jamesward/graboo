@@ -91,7 +91,7 @@ jobs:
       # this test is here because it requires the released gradle plugin
       # todo: doesn't run on macos-arm64
       - name: test graboo
-        if: ${{ matrix.target == 'ubuntu-x64' || martix.target == 'macos-x64' }}
+        if: ${{ matrix.target == 'ubuntu-x64' || matrix.target == 'macos-x64' }}
         run: |
           mkdir ~/.graboo
           cp ${{ github.workspace }}/bootstrapper/build/bin/${{ matrix.platform-name }}/releaseExecutable/${{ matrix.release-file }} ~/.graboo/${{ matrix.asset-name }}
