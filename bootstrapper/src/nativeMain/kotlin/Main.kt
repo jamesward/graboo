@@ -281,10 +281,9 @@ fun getArtifact(): String? =
         else -> null
     }
 
-suspend fun updateSelf(args: Array<String>, grabooDir: Path? = grabooDir(), forceUpdateTo: String? = null) {
-    val maybeUpdateToWithLatest: String? = if (forceUpdateTo == null) {
-        val thisVersion = Version()
-        val updateTo = SemVer(thisVersion)?.let { thisSemVer ->
+suspend fun updateToVersion(thisVersion: String = Version(), forceUpdateTo: String? = null): String? =
+    if (forceUpdateTo == null) {
+        SemVer(thisVersion)?.let { thisSemVer ->
             val release = client.get("https://api.github.com/repos/jamesward/graboo/releases/latest").body<Release>()
             SemVer(release.tag_name)?.let { latest ->
                 if (latest > thisSemVer) {
@@ -294,28 +293,22 @@ suspend fun updateSelf(args: Array<String>, grabooDir: Path? = grabooDir(), forc
                 }
             }
         }
-
-        if (updateTo == null) {
-            println("Did not update because you already have the newest version")
-            exit(0)
-        }
-
-        updateTo
     }
     else {
-        "v$forceUpdateTo"
+        "v${forceUpdateTo.removePrefix("v")}"
     }
 
-    maybeUpdateToWithLatest?.let { updateTo ->
+suspend fun update(grabooDir: Path? = grabooDir(), forceUpdateTo: String? = null): Pair<String, Path>? =
+    updateToVersion(forceUpdateTo = forceUpdateTo)?.let { updateTo ->
         grabooDir?.let {
             val installedGraboo = FileSystem.SYSTEM.list(grabooDir).find { it.name.startsWith("graboo-") && !it.name.endsWith("-new") }
             val maybeGrabooExe: Path? = installedGraboo ?: getArtifact()?.let { grabooDir / it}
 
             maybeGrabooExe?.let { grabooExe ->
-                println("Updating to $updateTo")
                 val url = "https://github.com/jamesward/graboo/releases/download/$updateTo/${grabooExe.name}"
                 val response = client.get(url)
                 if (response.status.isSuccess()) {
+                    println("Updating to $updateTo")
                     val bytes = client.get(url).readBytes()
                     val newFile = grabooDir / "${grabooExe.name}-new"
                     FileSystem.SYSTEM.write(newFile) {
@@ -323,40 +316,58 @@ suspend fun updateSelf(args: Array<String>, grabooDir: Path? = grabooDir(), forc
                     }
                     makeExecutable(newFile)
 
-                    val result = Command(newFile.toString())
-                        .args(*args)
-                        .spawn()
-                        .wait()
-
-                    exit(result.exitStatus())
+                    updateTo to newFile
+                }
+                else {
+                    println("The release $updateTo with file ${grabooExe.name} does not exist")
+                    null
                 }
             }
         }
     }
-}
 
 // bug: entrypoint can't be a suspend fun
 @OptIn(ExperimentalForeignApi::class)
 fun main(args: Array<String>): Unit = runBlocking {
     if (args.firstOrNull() == "update") {
         val updateTo = args.getOrNull(1)
-        updateSelf(arrayOf("--help"), forceUpdateTo = updateTo)
+        update(forceUpdateTo = updateTo)?.let { (versionTo, _) ->
+            println("Updated to $versionTo")
+            exit(0)
+        } ?: run {
+            println("No newer versions to update to")
+            exit(1)
+        }
     }
 
     // todo: only at most one per hour
-    updateSelf(args)
+    update()?.let { (versionTo, newExe) ->
+        println("Restarting on new version $versionTo")
+
+        val result = Command(newExe.toString())
+            .args(*args)
+            .spawn()
+            .wait()
+
+        exit(result.exitStatus())
+    }
 
     if (args.firstOrNull() == "--help") {
-        println("Welcome to Graboo ${Version()}")
-        println()
-        println("Create a new project:")
-        println("  graboo new <type> <dir>")
-        println()
-        println("Run Gradle task:")
-        println("  graboo <task>")
-        println()
-        println("Run the Graboo Shell:")
-        println("  graboo")
+        println(
+            """
+            Welcome to Graboo ${Version()}
+
+            Create a new project:
+              graboo new <type> <dir>
+
+            Run Gradle task:
+              graboo <task>
+
+            Run the Graboo Shell:
+              graboo
+            """.trimIndent()
+        )
+
         exit(0)
     }
 
