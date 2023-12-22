@@ -48,8 +48,12 @@ kotlin {
             withCompilations { true }
 
             group("linuxAndJvm") {
-                withLinux()
-                withJvm()
+                group("linux") {
+                    withLinux()
+                }
+                group("jvm") {
+                    withJvm()
+                }
             }
         }
     }
@@ -180,7 +184,8 @@ tasks.withType<com.google.cloud.tools.jib.gradle.JibTask> {
 jib {
     from {
 //        image = "gcr.io/distroless/base"
-        image = "debian:stable-slim"
+//        image = "debian:stable-slim"
+        image = "ghcr.io/jamesward/graboo-server-base:main"
     }
     pluginExtensions {
         pluginExtension {
@@ -190,15 +195,6 @@ jib {
     }
     container {
         mainClass = "MainKt"
-    }
-    extraDirectories {
-        paths {
-            path {
-                setFrom(file("jib-files"))
-                into = "/usr/bin"
-            }
-        }
-        permissions.put("/usr/bin/zip", "755")
     }
 }
 
