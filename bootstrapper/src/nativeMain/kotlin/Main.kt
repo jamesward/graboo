@@ -284,17 +284,23 @@ fun getArtifact(): String? =
 suspend fun updateSelf(args: Array<String>, grabooDir: Path? = grabooDir(), forceUpdateTo: String? = null) {
     val maybeUpdateToWithLatest: String? = if (forceUpdateTo == null) {
         val thisVersion = Version()
-        SemVer(thisVersion)?.let { thisSemVer ->
+        val updateTo = SemVer(thisVersion)?.let { thisSemVer ->
             val release = client.get("https://api.github.com/repos/jamesward/graboo/releases/latest").body<Release>()
             SemVer(release.tag_name)?.let { latest ->
                 if (latest > thisSemVer) {
                     release.tag_name
                 } else {
-                    println("Did not update because you already have the newest version")
                     null
                 }
             }
         }
+
+        if (updateTo == null) {
+            println("Did not update because you already have the newest version")
+            exit(0)
+        }
+
+        updateTo
     }
     else {
         "v$forceUpdateTo"
@@ -351,7 +357,7 @@ fun main(args: Array<String>): Unit = runBlocking {
         println()
         println("Run the Graboo Shell:")
         println("  graboo")
-        exit(1)
+        exit(0)
     }
 
     if (args.firstOrNull() == "--version") {
