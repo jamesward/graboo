@@ -290,6 +290,7 @@ suspend fun updateSelf(args: Array<String>, grabooDir: Path? = grabooDir(), forc
                 if (latest > thisSemVer) {
                     release.tag_name
                 } else {
+                    println("Did not update because you already have the newest version")
                     null
                 }
             }

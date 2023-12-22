@@ -41,6 +41,11 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
+      - name: Install Dependencies
+        run: |
+          sudo apt update
+          sudo apt-get install libcurl4-openssl-dev
+
       # todo: run on PR or move to test ?
       - name: Create Container
         run: |
