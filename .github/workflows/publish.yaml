@@ -85,8 +85,13 @@ jobs:
         run: |
           ./gradlew :bootstrapper:linkReleaseExecutable${{ matrix.platform-name }}
 
+
+      # todo: possible race condition as plugin is published by the ubuntu runner
+
+      # this test is here because it requires the released gradle plugin
+      # todo: doesn't run on macos-arm64
       - name: test graboo
-        if: matrix.os != 'windows'
+        if: ${{ matrix.target == 'ubuntu-x64' || martix.target == 'macos-x64' }}
         run: |
           mkdir ~/.graboo
           cp ${{ github.workspace }}/bootstrapper/build/bin/${{ matrix.platform-name }}/releaseExecutable/${{ matrix.release-file }} ~/.graboo/${{ matrix.asset-name }}
@@ -97,6 +102,7 @@ jobs:
           echo $output
           echo $output | grep --quiet "hello, world"
 
+      # this test is here because it requires the released gradle plugin
       - name: test graboo.cmd
         if: matrix.os == 'windows'
         run: |
@@ -107,6 +113,7 @@ jobs:
           cd javaapp
           # todo: verify output
           .\graboo.cmd run
+
 
       - name: upload executables
         uses: actions/upload-artifact@v4

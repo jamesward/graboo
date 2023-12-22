@@ -48,11 +48,10 @@
   - No top-level `build.gradle.kts` ?
 - gradle-plugin
   - Fix IntelliJ gradle settings if import before running graboo
-- double-click graboo to open in IDE (detect location and archetype to determine which one)?
-  - `.cache/JetBrains/IntelliJIdea2023.3/.home`
-  - https://www.jetbrains.com/help/idea/directories-used-by-the-ide-to-store-settings-caches-plugins-and-logs.html#config-directory
+- auto-update gradle settings plugin ?
 
 ## Model
+- Docs on DSL
 - Plugin internal deps externalized versions
   - Can we use version catalogs?
   - Is bumping internal versions only via bumping the gradleboot plugin?

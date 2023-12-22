@@ -41,7 +41,7 @@ jobs:
 
       - uses: SimonMarquis/android-accept-licenses@v1
 
-      - name: Test
+      - name: Test ${{ matrix.os }}
         if: matrix.os != 'windows'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -49,7 +49,9 @@ jobs:
           ./gradlew test
           ./gradlew allTests
 
-      - name: Test
+      # on windows these are separate so that test failures cause a job failure
+
+      - name: Test ${{ matrix.os }}
         if: matrix.os == 'windows'
         shell: powershell
         env:
@@ -57,7 +59,7 @@ jobs:
         run: |
           .\gradlew test
 
-      - name: allTest
+      - name: allTest ${{ matrix.os }}
         if: matrix.os == 'windows'
         shell: powershell
         env:
