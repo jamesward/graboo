@@ -13,5 +13,5 @@ dependencyResolutionManagement {
 
 plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version "0.8.0"
-    id("com.jamesward.kotlin-universe-catalog") version "2023.12.18-5"
+    id("com.jamesward.kotlin-universe-catalog") version "2024.02.06-2"
 }
